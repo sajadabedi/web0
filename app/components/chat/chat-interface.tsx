@@ -45,9 +45,9 @@ export function ChatInterface() {
   }
 
   return (
-    <div
-      className={`fixed right-0 top-0 h-full bg-background border-l transition-all duration-300 ${
-        isExpanded ? "w-1/3" : "w-12"
+    <div 
+      className={`h-full bg-background border-r transition-[width] duration-300 ease-in-out ${
+        isExpanded ? "w-[400px]" : "w-12"
       }`}
     >
       <Button
@@ -94,7 +94,7 @@ export function ChatInterface() {
                     <button
                       key={prompt}
                       onClick={() => handleExampleClick(prompt)}
-                      className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10 transition-colors"
+                      className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10"
                       disabled={isLoading}
                     >
                       {prompt}
@@ -161,7 +161,7 @@ export function ChatInterface() {
                         <button
                           key={i}
                           onClick={() => handleExampleClick(msg.content)}
-                          className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10 transition-colors"
+                          className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10"
                           disabled={isLoading}
                         >
                           {msg.content}
