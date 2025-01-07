@@ -1,7 +1,8 @@
 'use client'
 
-import { create } from 'zustand'
 import OpenAI from 'openai'
+import { create } from 'zustand'
+import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 
 interface Message {
@@ -14,6 +15,8 @@ interface ChatStore {
   messages: Message[]
   isLoading: boolean
   error: string | null
+  currentHtml: string | null
+  currentCss: string | null
   sendMessage: (content: string) => Promise<void>
   setError: (error: string | null) => void
 }
@@ -23,176 +26,219 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true,
 })
 
-const SYSTEM_PROMPT = `You are a specialized website builder AI that creates modern, beautiful websites using Tailwind CSS. Your sole purpose is to generate website layouts and designs based on user requests.
+const SYSTEM_PROMPT = `You are a specialized website builder AI that creates and modifies modern, beautiful websites using Tailwind CSS. Your purpose is to either create new websites or modify existing ones based on user requests.
 
 IMPORTANT RULES:
-1. ONLY respond to website building requests
-2. ALWAYS generate both HTML and CSS code for every request
-3. ONLY respond in this exact JSON format:
+1. If the user asks for a new website or this is the first request, create a fresh website
+2. For all other requests, modify the existing website based on the user's requests
+3. ALWAYS maintain the current website's structure and only modify what the user asks to change
+4. For content changes (text, headings, paragraphs), preserve the HTML structure and only update the text content
+5. ALWAYS use Tailwind CSS classes for ALL styling - DO NOT use custom CSS
+6. ALWAYS include proper viewport meta tags and content structure
+7. ONLY respond in this exact JSON format:
 {
-  "html": "<your generated HTML>",
-  "css": "/* your generated CSS */",
-  "message": "Brief description of the generated website"
-}
-
-Design Guidelines:
-- Use Tailwind CSS for all styling
-- Follow modern design trends with clean layouts
-- Use beautiful typography with font combinations
-- Implement proper spacing and visual hierarchy
-- Create responsive designs that work on all devices
-- Use subtle animations and transitions
-- Include hover effects for interactive elements
-- Use a modern color palette
-- Implement proper contrast for accessibility
-
-Typography Guidelines:
-- Use Inter for modern sans-serif text
-- Use appropriate font sizes and weights
-- Implement proper line heights and letter spacing
-- Use semantic headings (h1-h6) with proper sizing
-
-Layout Guidelines:
-- Use CSS Grid and Flexbox via Tailwind
-- Implement proper padding and margins
-- Create balanced whitespace
-- Use container classes for proper content width
-- Make layouts responsive using Tailwind breakpoints
-
-Component Guidelines:
-- Create modern, clean navigation bars
-- Use subtle shadows for depth
-- Implement smooth hover transitions
-- Use proper border radius for different elements
-- Include proper spacing between sections
-
-Example response format:
-{
-  "html": "<!DOCTYPE html>
-<html lang=\\"en\\">
-<head>
-  <meta charset=\\"UTF-8\\" />
-  <meta name=\\"viewport\\" content=\\"width=device-width, initial-scale=1.0\\" />
-  <title>Modern Website</title>
-  <link href=\\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\\" rel=\\"stylesheet\\" />
-</head>
-<body class=\\"bg-white\\">
-  <nav class=\\"fixed w-full bg-white/80 backdrop-blur-md border-b border-neutral-200/80 z-50\\">
-    <div class=\\"container mx-auto px-4 py-4 flex items-center justify-between\\">
-      <a href=\\"#\\" class=\\"text-xl font-semibold text-neutral-900\\">Logo</a>
-      <div class=\\"flex items-center gap-8\\">
-        <a href=\\"#\\" class=\\"text-neutral-600 hover:text-neutral-900 transition-colors\\">Home</a>
-        <a href=\\"#\\" class=\\"text-neutral-600 hover:text-neutral-900 transition-colors\\">About</a>
-        <a href=\\"#\\" class=\\"text-neutral-600 hover:text-neutral-900 transition-colors\\">Services</a>
-        <a href=\\"#\\" class=\\"px-4 py-2 bg-neutral-900 text-white rounded-md hover:bg-neutral-800 transition-colors\\">Contact</a>
-      </div>
-    </div>
-  </nav>
-
-  <main class=\\"pt-24\\">
-    <section class=\\"container mx-auto px-4 py-16\\">
-      <h1 class=\\"text-5xl font-bold text-neutral-900 mb-6\\">Beautiful websites made simple</h1>
-      <p class=\\"text-xl text-neutral-600 max-w-2xl\\">Create stunning, modern websites with our intuitive builder.</p>
-    </section>
-  </main>
-</body>
-</html>",
-  "css": "/* Base styles are handled by Tailwind */",
-  "message": "Created a modern website with a clean navigation, hero section, and beautiful typography using Inter font."
-}
-
-If the user asks anything unrelated to website building, respond with:
-{
-  "html": "",
+  "html": "<The complete HTML code for the website>",
   "css": "",
-  "message": "I can only help with website creation. Please describe the website you'd like to build."
-}`
+  "message": "A brief description of what was created or modified",
+  "isNewWebsite": true
+}
 
-export const useChat = create<ChatStore>((set, get) => {
-  const updatePreview = usePreviewStore.getState().updatePreview
+STYLING GUIDELINES:
 
-  return {
-    messages: [],
-    isLoading: false,
-    error: null,
-    sendMessage: async (content: string) => {
-      set({ isLoading: true, error: null })
+Tailwind:
+- Use Tailwind's utility classes for ALL styling
+- Follow mobile-first responsive design (sm:, md:, lg:)
+- Use proper spacing utilities (p-4, m-2, etc.)
+- Use flex and grid utilities for layout
+- Use proper text utilities for typography
+- Common patterns:
+  - Container: container mx-auto px-4
+  - Flex layout: flex items-center justify-between
+  - Grid layout: grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
+  - Text styles: text-sm text-neutral-600 hover:text-neutral-900
+  - Spacing: space-y-4 gap-8 p-4 my-8
 
-      try {
-        const newMessage: Message = {
-          role: 'user',
-          content,
-          timestamp: new Date(),
-        }
+Layout:
+- Use semantic HTML (nav, main, section, article, etc.)
+- Maintain proper heading hierarchy (h1, h2, etc.)
+- Create responsive designs that work on all devices
+- Use proper padding and margin for spacing
+- Structure sections with container and max-width
 
-        set((state) => ({
-          messages: [...state.messages, newMessage],
-        }))
+Components:
+- Navigation: Fixed header with backdrop blur
+- Buttons: Proper padding, hover states
+- Cards: Consistent spacing, subtle shadows
+- Lists: Proper gap spacing
+- Images: Proper aspect ratios, object-fit
 
-        console.log('Sending request to OpenAI...')
-        const response = await openai.chat.completions.create({
-          model: 'gpt-3.5-turbo',
-          temperature: 0.7,
-          messages: [
-            {
-              role: 'system',
-              content: SYSTEM_PROMPT,
-            },
-            ...get().messages.map((msg) => ({
-              role: msg.role,
-              content: msg.content,
-            })),
-            { role: 'user', content },
-          ],
-        })
+Example HTML Structure:
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Title</title>
+  </head>
+  <body class="bg-white">
+    <nav class="fixed w-full bg-white/80 backdrop-blur-md border-b z-50">
+      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+        <a href="#" class="text-xl font-semibold">Brand</a>
+        <div class="flex items-center gap-6">
+          <a href="#" class="text-sm text-neutral-600 hover:text-neutral-900">Link</a>
+        </div>
+      </div>
+    </nav>
+    <main class="pt-20">
+      <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold">Heading</h1>
+        <p class="mt-4 text-lg text-neutral-600">Content</p>
+      </div>
+    </main>
+  </body>
+</html>`
 
-        const responseContent = response.choices[0]?.message?.content
-        console.log('OpenAI response:', responseContent)
-
-        if (!responseContent) {
-          console.error('No response content from OpenAI')
-          throw new Error('No response from OpenAI')
-        }
+export const useChatStore = create<ChatStore>()(
+  devtools(
+    (set, get) => ({
+      messages: [],
+      isLoading: false,
+      error: null,
+      currentHtml: null,
+      currentCss: null,
+      sendMessage: async (content: string) => {
+        set({ isLoading: true, error: null })
 
         try {
-          const parsedResponse = JSON.parse(responseContent)
-          console.log('Parsed response:', parsedResponse)
-
-          // Validate response format
-          if (!parsedResponse.html || !parsedResponse.css || !parsedResponse.message) {
-            console.error('Invalid response format:', parsedResponse)
-            throw new Error('Invalid response format')
-          }
-
-          // Update the preview with the generated code
-          console.log('Updating preview with:', {
-            htmlLength: parsedResponse.html.length,
-            cssLength: parsedResponse.css.length,
-          })
-          updatePreview(parsedResponse.html, parsedResponse.css)
-
-          const assistantMessage: Message = {
-            role: 'assistant',
-            content: parsedResponse.message,
+          const newMessage: Message = {
+            role: 'user',
+            content,
             timestamp: new Date(),
           }
 
           set((state) => ({
-            messages: [...state.messages, assistantMessage],
-            isLoading: false,
+            messages: [...state.messages, newMessage],
           }))
+
+          const { currentHtml, currentCss } = get()
+
+          // Add current website state to the context if it exists
+          const contextMessage =
+            currentHtml && currentCss
+              ? [
+                  {
+                    role: 'system' as const,
+                    content: `Current website state:
+HTML:
+${currentHtml}
+
+CSS:
+${currentCss}
+
+Please modify the above website based on the user's request. Only create a new website if explicitly asked.`,
+                  },
+                ]
+              : []
+
+          console.log('Sending request to OpenAI...')
+          const response = await openai.chat.completions.create({
+            model: 'gpt-4',
+            temperature: 0.7,
+            stream: true,
+            messages: [
+              {
+                role: 'system',
+                content: SYSTEM_PROMPT,
+              },
+              ...contextMessage,
+              ...get().messages.map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+              })),
+              { role: 'user', content },
+            ],
+          })
+
+          let streamedResponse = ''
+          let tempMessage: Message = {
+            role: 'assistant',
+            content: currentHtml
+              ? 'Modifying your website...'
+              : 'Generating your website...',
+            timestamp: new Date(),
+          }
+
+          // Add a temporary message that we'll update as we stream
+          set((state) => ({
+            messages: [...state.messages, tempMessage],
+          }))
+
+          let jsonStartIndex = -1
+          let completeJson = ''
+
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content || ''
+            streamedResponse += content
+
+            // Find the start of the JSON object
+            if (jsonStartIndex === -1) {
+              jsonStartIndex = streamedResponse.indexOf('{')
+            }
+
+            if (jsonStartIndex !== -1) {
+              // Extract everything from the JSON start
+              completeJson = streamedResponse.slice(jsonStartIndex)
+
+              if (completeJson.trim().endsWith('}')) {
+                try {
+                  const parsedResponse = JSON.parse(completeJson)
+                  if (parsedResponse.html && parsedResponse.message) {
+                    console.log('Valid response received')
+
+                    // Update the preview and store the current state
+                    const updatePreview = usePreviewStore.getState().updatePreview
+                    updatePreview(parsedResponse.html, parsedResponse.css)
+                    set({
+                      currentHtml: parsedResponse.html,
+                      currentCss: parsedResponse.css,
+                    })
+
+                    // Update the final message
+                    tempMessage.content = parsedResponse.message
+                    set((state) => {
+                      const messages = [...state.messages]
+                      messages[messages.length - 1] = { ...tempMessage }
+                      return { messages, isLoading: false }
+                    })
+                    return
+                  }
+                } catch (error) {
+                  // Only throw if we've waited for a complete response
+                  if (!streamedResponse.includes('"message":')) {
+                    console.debug('Partial response, continuing to stream...')
+                  } else {
+                    throw new Error('Invalid JSON format in response')
+                  }
+                }
+              }
+            }
+          }
+
+          throw new Error('No valid JSON response received from OpenAI')
         } catch (error) {
-          console.error('Failed to parse response:', error)
-          throw new Error('Invalid response format from OpenAI')
+          console.error('Chat error:', error)
+          const errorMessage =
+            error instanceof Error ? error.message : 'Failed to generate website'
+          set({
+            error: `Error: ${errorMessage}. Please try again.`,
+            isLoading: false,
+          })
         }
-      } catch (error) {
-        console.error('Chat error:', error)
-        set({
-          error: 'Failed to generate website. Please try again.',
-          isLoading: false,
-        })
-      }
-    },
-    setError: (error: string | null) => set({ error }),
-  }
-})
+      },
+      setError: (error: string | null) => set({ error }),
+    }),
+    {
+      name: 'chat-store',
+    }
+  )
+)

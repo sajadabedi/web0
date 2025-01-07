@@ -6,7 +6,7 @@ import * as ScrollArea from "@radix-ui/react-scroll-area"
 import * as Tabs from "@radix-ui/react-tabs"
 import { MessageSquare, History, Maximize2, Minimize2, Command } from "lucide-react"
 import { useKeyboardShortcut } from "@/lib/hooks/use-keyboard-shortcut"
-import { useChat } from "@/lib/hooks/use-chat"
+import { useChatStore } from "@/lib/hooks/use-chat"
 
 interface ChatMessage {
   role: "user" | "assistant"
@@ -24,7 +24,7 @@ const EXAMPLE_PROMPTS = [
 
 export function ChatInterface() {
   const [isExpanded, setIsExpanded] = useState(true)
-  const { messages, sendMessage, isLoading } = useChat()
+  const { messages, sendMessage, isLoading } = useChatStore()
   const [inputValue, setInputValue] = useState("")
 
   // Toggle chat with Command+K
@@ -66,26 +66,28 @@ export function ChatInterface() {
 
       {isExpanded && (
         <Tabs.Root defaultValue="chat" className="h-full flex flex-col">
-          <Tabs.List className="grid w-full grid-cols-2 mt-12 px-4">
-            <Tabs.Trigger
-              value="chat"
-              className="flex gap-2 items-center justify-center py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-            >
-              <MessageSquare size={18} />
-              Builder
-            </Tabs.Trigger>
-            <Tabs.Trigger
-              value="history"
-              className="flex gap-2 items-center justify-center py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary"
-            >
-              <History size={18} />
-              History
-            </Tabs.Trigger>
-          </Tabs.List>
+          <div className="sticky top-0 bg-background z-10">
+            <Tabs.List className="grid w-full grid-cols-2 mt-12 px-4 border-b">
+              <Tabs.Trigger
+                value="chat"
+                className="flex gap-2 items-center justify-center py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary -mb-[2px]"
+              >
+                <MessageSquare size={18} />
+                Builder
+              </Tabs.Trigger>
+              <Tabs.Trigger
+                value="history"
+                className="flex gap-2 items-center justify-center py-2 px-4 data-[state=active]:border-b-2 data-[state=active]:border-primary -mb-[2px]"
+              >
+                <History size={18} />
+                History
+              </Tabs.Trigger>
+            </Tabs.List>
+          </div>
 
-          <Tabs.Content value="chat" className="flex-1 flex flex-col">
-            {messages.length === 0 && (
-              <div className="p-4 space-y-4">
+          <Tabs.Content value="chat" className="flex-1 flex flex-col h-[calc(100vh-116px)]">
+            {messages.length === 0 ? (
+              <div className="flex-1 p-4 space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Start by describing the website you want to build, or try one of these examples:
                 </p>
@@ -102,54 +104,58 @@ export function ChatInterface() {
                   ))}
                 </div>
               </div>
-            )}
-            
-            <ScrollArea.Root className="flex-1">
-              <ScrollArea.Viewport className="h-full w-full p-4">
-                {messages.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`mb-4 p-3 rounded-lg ${
-                      msg.role === "user"
-                        ? "bg-primary/10 ml-4"
-                        : "bg-muted mr-4"
-                    }`}
-                  >
-                    <div className="text-xs text-muted-foreground mb-1">
-                      {msg.role === "user" ? "Your Request" : "Generated Website"}
-                    </div>
-                    {msg.content}
+            ) : (
+              <ScrollArea.Root className="flex-1 overflow-hidden">
+                <ScrollArea.Viewport className="h-full w-full p-4">
+                  <div className="space-y-4">
+                    {messages.map((msg, i) => (
+                      <div
+                        key={i}
+                        className={`p-3 rounded-lg ${
+                          msg.role === "user"
+                            ? "bg-primary/10 ml-4"
+                            : "bg-muted mr-4"
+                        }`}
+                      >
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {msg.role === "user" ? "Your Request" : "Generated Website"}
+                        </div>
+                        {msg.content}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </ScrollArea.Viewport>
-              <ScrollArea.Scrollbar orientation="vertical">
-                <ScrollArea.Thumb />
-              </ScrollArea.Scrollbar>
-            </ScrollArea.Root>
+                </ScrollArea.Viewport>
+                <ScrollArea.Scrollbar orientation="vertical">
+                  <ScrollArea.Thumb />
+                </ScrollArea.Scrollbar>
+              </ScrollArea.Root>
+            )}
 
-            <form onSubmit={handleSubmit} className="p-4 border-t">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Describe the website you want to build..."
-                    className="w-full p-2 pr-8 rounded-md border bg-background"
-                    disabled={isLoading}
-                  />
-                  <Command className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+            <div className="sticky bottom-0 bg-background border-t p-4">
+              <form onSubmit={handleSubmit}>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      placeholder="Describe the website you want to build..."
+                      className="w-full p-2 pr-8 rounded-md border bg-background"
+                      disabled={isLoading}
+                    />
+                    <Command className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                  </div>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Generating..." : "Build"}
+                  </Button>
                 </div>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? "Generating..." : "Build"}
-                </Button>
-              </div>
-            </form>
+              </form>
+            </div>
           </Tabs.Content>
 
-          <Tabs.Content value="history" className="flex-1">
-            <ScrollArea.Root className="h-full p-4">
-              <ScrollArea.Viewport className="h-full w-full">
+          <Tabs.Content value="history" className="flex-1 h-[calc(100vh-116px)]">
+            <ScrollArea.Root className="h-full">
+              <ScrollArea.Viewport className="h-full w-full p-4">
                 <div className="space-y-4">
                   {messages.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
