@@ -1,41 +1,41 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { Button } from "../ui/button"
-import * as ScrollArea from "@radix-ui/react-scroll-area"
-import * as Tabs from "@radix-ui/react-tabs"
-import { MessageSquare, History, Maximize2, Minimize2 } from "lucide-react"
-import { useKeyboardShortcut } from "@/lib/hooks/use-keyboard-shortcut"
-import { useChatStore } from "@/lib/hooks/use-chat"
+import { Button } from '@/components/ui/button'
+import { useChatStore } from '@/lib/hooks/use-chat'
+import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
+import * as ScrollArea from '@radix-ui/react-scroll-area'
+import * as Tabs from '@radix-ui/react-tabs'
+import { History, Maximize2, MessageSquare, Minimize2 } from 'lucide-react'
+import { useState } from 'react'
 
 interface ChatMessage {
-  role: "user" | "assistant"
+  role: 'user' | 'assistant'
   content: string
   timestamp: Date
 }
 
 const EXAMPLE_PROMPTS = [
-  "Build a modern portfolio website",
-  "Create a landing page for a fitness app",
-  "Make a simple blog layout",
-  "Design a restaurant website",
-  "Build a photography portfolio"
+  'Build a modern portfolio website',
+  'Create a landing page for a fitness app',
+  'Make a simple blog layout',
+  'Design a restaurant website',
+  'Build a photography portfolio',
 ]
 
 export function ChatInterface() {
   const [isExpanded, setIsExpanded] = useState(true)
   const { messages, sendMessage, isLoading } = useChatStore()
-  const [inputValue, setInputValue] = useState("")
+  const [inputValue, setInputValue] = useState('')
 
   // Toggle chat with Command+K
-  useKeyboardShortcut("k", () => setIsExpanded(prev => !prev))
+  useKeyboardShortcut('k', () => setIsExpanded((prev) => !prev))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
 
     await sendMessage(inputValue)
-    setInputValue("")
+    setInputValue('')
   }
 
   const handleExampleClick = (prompt: string) => {
@@ -45,9 +45,9 @@ export function ChatInterface() {
   }
 
   return (
-    <div 
+    <div
       className={`h-full bg-background border-r transition-[width] duration-300 ease-in-out ${
-        isExpanded ? "w-[400px]" : "w-12"
+        isExpanded ? 'w-[400px]' : 'w-12'
       }`}
     >
       <Button
@@ -55,7 +55,7 @@ export function ChatInterface() {
         size="icon"
         className="absolute left-2 top-2 group"
         onClick={() => setIsExpanded(!isExpanded)}
-        title={`${isExpanded ? "Collapse" : "Expand"} (⌘K)`}
+        title={`${isExpanded ? 'Collapse' : 'Expand'} (⌘K)`}
       >
         {isExpanded ? (
           <Minimize2 size={18} className="group-hover:scale-110 transition-transform" />
@@ -85,11 +85,15 @@ export function ChatInterface() {
             </Tabs.List>
           </div>
 
-          <Tabs.Content value="chat" className="flex-1 flex flex-col h-[calc(100vh-116px)]">
+          <Tabs.Content
+            value="chat"
+            className="flex-1 flex flex-col h-[calc(100vh-116px)]"
+          >
             {messages.length === 0 ? (
               <div className="flex-1 p-4 space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Start by describing the website you want to build, or try one of these examples:
+                  Start by describing the website you want to build, or try one of these
+                  examples:
                 </p>
                 <div className="space-y-2">
                   {EXAMPLE_PROMPTS.map((prompt) => (
@@ -112,13 +116,11 @@ export function ChatInterface() {
                       <div
                         key={i}
                         className={`p-3 rounded-lg ${
-                          msg.role === "user"
-                            ? "bg-primary/10 ml-4"
-                            : "bg-muted mr-4"
+                          msg.role === 'user' ? 'bg-primary/10 ml-4' : 'bg-muted mr-4'
                         }`}
                       >
                         <div className="text-xs text-muted-foreground mb-1">
-                          {msg.role === "user" ? "Your Request" : "Generated Website"}
+                          {msg.role === 'user' ? 'Your Request' : 'Generated Website'}
                         </div>
                         {msg.content}
                       </div>
@@ -156,18 +158,19 @@ export function ChatInterface() {
                       Your website building history will appear here
                     </p>
                   ) : (
-                    messages.map((msg, i) => (
-                      msg.role === "user" && (
-                        <button
-                          key={i}
-                          onClick={() => handleExampleClick(msg.content)}
-                          className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10"
-                          disabled={isLoading}
-                        >
-                          {msg.content}
-                        </button>
-                      )
-                    ))
+                    messages.map(
+                      (msg, i) =>
+                        msg.role === 'user' && (
+                          <button
+                            key={i}
+                            onClick={() => handleExampleClick(msg.content)}
+                            className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10"
+                            disabled={isLoading}
+                          >
+                            {msg.content}
+                          </button>
+                        )
+                    )
                   )}
                 </div>
               </ScrollArea.Viewport>

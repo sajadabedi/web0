@@ -1,5 +1,5 @@
-import { ChatInterface } from './components/chat/chat-interface'
-import { SitePreview } from './components/preview/site-preview'
+import { ChatInterface } from '@/components/chat/chat-interface'
+import { SitePreview } from '@/components/preview/site-preview'
 
 export default function Home() {
   return (
