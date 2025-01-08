@@ -53,14 +53,14 @@ export function ChatInterface() {
 
   return (
     <div
-      className={`h-full bg-background border-r transition-[width] duration-300 ease-in-out ${
+      className={`h-full border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
         isExpanded ? 'w-[400px]' : 'w-12'
       }`}
     >
       <Button
         variant="ghost"
         size="icon"
-        className="absolute left-2 top-2 group"
+        className="absolute left-2 top-2 group text-black dark:text-white"
         onClick={() => setIsExpanded(!isExpanded)}
         title={`${isExpanded ? 'Collapse' : 'Expand'} (⌘K)`}
       >
@@ -78,13 +78,13 @@ export function ChatInterface() {
       </Button>
 
       {isExpanded && (
-        <div className="h-full flex flex-col pt-12">
+        <div className="h-full flex flex-col pt-12 text-black dark:text-white">
           <ScrollArea.Root className="flex-1 overflow-hidden">
             <ScrollArea.Viewport className="h-full">
               <div className="pb-4">
                 {messages.length === 0 ? (
                   <div className="p-4 space-y-4">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm">
                       Start by describing the website you want to build, or try one of
                       these examples:
                     </p>
@@ -93,7 +93,7 @@ export function ChatInterface() {
                         <button
                           key={prompt}
                           onClick={() => handleExampleClick(prompt)}
-                          className="w-full text-left p-2 text-sm rounded-md hover:bg-primary/10"
+                          className="w-full text-left p-2 text-sm rounded-md"
                           disabled={isLoading}
                         >
                           {prompt}
@@ -113,7 +113,7 @@ export function ChatInterface() {
                         <div
                           className={`p-3 rounded-xl text-base ${
                             msg.role === 'user'
-                              ? 'bg-gray-100 max-w-[80%]'
+                              ? 'bg-gray-100 text-black dark:text-white dark:bg-neutral-800 max-w-[80%]'
                               : 'bg-transparent'
                           }`}
                         >
@@ -133,14 +133,14 @@ export function ChatInterface() {
             </ScrollArea.Scrollbar>
           </ScrollArea.Root>
 
-          <div className="border-t bg-background">
+          <div className="border-t dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
             <form onSubmit={handleSubmit} className="p-4">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Describe your website..."
-                className="w-full px-3 py-2 text-sm rounded-md bg-muted/50 focus:outline-none"
+                className="w-full px-3 py-2 text-sm rounded-md bg-transparent caret-pink-500 text-black dark:text-white focus:outline-none"
                 disabled={isLoading}
               />
             </form>

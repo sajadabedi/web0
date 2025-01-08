@@ -8,7 +8,7 @@ export default function Home() {
       <ChatInterface />
 
       {/* Preview Area */}
-      <main className="flex-1 bg-background p-8 transition-[flex-grow] duration-300 ease-in-out">
+      <main className="flex-1 p-8 transition-[flex-grow] duration-300 ease-in-out">
         <SitePreview />
       </main>
     </div>
