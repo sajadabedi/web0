@@ -25,17 +25,14 @@ export function ChatInterface() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputValue.trim() || isLoading) return
+    const trimmedValue = inputValue.trim()
+    if (!trimmedValue || isLoading) return
 
-    const newMessage = {
-      role: 'user' as const,
-      content: inputValue,
-      timestamp: new Date(),
-    }
+    // Clear input immediately
+    setInputValue('')
 
     try {
-      await sendMessage(newMessage.content)
-      setInputValue('')
+      await sendMessage(trimmedValue)
     } catch (error) {
       console.error('Failed to send message:', error)
     }
@@ -43,17 +40,12 @@ export function ChatInterface() {
 
   const handleExampleClick = async (prompt: string) => {
     if (isLoading) return
-
-    const newMessage = {
-      role: 'user' as const,
-      content: prompt,
-      timestamp: new Date(),
-    }
-
-    setInputValue(prompt)
+    
+    // Clear any existing input
+    setInputValue('')
+    
     try {
-      await sendMessage(newMessage.content)
-      setInputValue('')
+      await sendMessage(prompt)
     } catch (error) {
       console.error('Failed to send example message:', error)
     }
