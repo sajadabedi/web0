@@ -209,28 +209,25 @@ Please modify the above website based on the user's request. Only create a new w
                   // Extract all image queries
                   const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
                   const matches = [...parsedResponse.html.matchAll(imageRegex)]
-                  
+
                   if (matches.length > 0) {
-                    const queries = matches.map(match => match[1])
-                    const alts = matches.map(match => match[2])
-                    
+                    const queries = matches.map((match) => match[1])
+                    const alts = matches.map((match) => match[2])
+
                     // Fetch all images
                     const images = await getMultipleUnsplashImages(queries)
-                    
+
                     // Replace image placeholders with actual images
                     let processedHtml = parsedResponse.html
                     images.forEach((image, index) => {
                       const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
                       const imgHtml = `
-                        <img 
-                          src="${image.url}" 
+                        <img
+                          src="${image.url}"
                           alt="${alts[index]}"
                           class="w-full h-full object-cover"
                           loading="lazy"
                         />
-                        <div class="text-xs text-gray-500 mt-1">
-                          Photo by <a href="${image.credit.link}" target="_blank" rel="noopener noreferrer" class="underline">${image.credit.name}</a> on Unsplash
-                        </div>
                       `
                       processedHtml = processedHtml.replace(placeholder, imgHtml)
                     })
