@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
-import { PanelRightOpen, PanelRightClose } from 'lucide-react'
+import { PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useState } from 'react'
 
 const EXAMPLE_PROMPTS = [
@@ -111,8 +111,10 @@ export function ChatInterface() {
                         }`}
                       >
                         <div
-                          className={`p-3 rounded-xl text-base max-w-[80%] ${
-                            msg.role === 'user' ? 'bg-gray-100' : 'bg-transparent'
+                          className={`p-3 rounded-xl text-base ${
+                            msg.role === 'user'
+                              ? 'bg-gray-100 max-w-[80%]'
+                              : 'bg-transparent'
                           }`}
                         >
                           {msg.content}
