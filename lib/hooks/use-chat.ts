@@ -27,89 +27,59 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true,
 })
 
-const SYSTEM_PROMPT = `You are a specialized website builder AI that creates and modifies modern, beautiful websites using Tailwind CSS. Your purpose is to either create new websites or modify existing ones based on user requests.
+const SYSTEM_PROMPT = `You are an expert web developer who specializes in creating and modifying websites using Tailwind CSS.
 
-IMPORTANT RULES:
-1. If the user asks for a new website or this is the first request, create a fresh website
-2. For all other requests, modify the existing website based on the user's requests
-3. ALWAYS maintain the current website's structure and only modify what the user asks to change
-4. For content changes (text, headings, paragraphs), preserve the HTML structure and only update the text content
-5. ALWAYS use Tailwind CSS classes for ALL styling - DO NOT use custom CSS
-6. ALWAYS include proper viewport meta tags and content structure
-7. ALWAYS include images in appropriate sections (hero, cards, galleries) unless specifically asked not to
-8. For images, use this EXACT format:
-   <unsplash-image query="SEARCH_TERMS" alt="DESCRIPTIVE_ALT_TEXT" />
-   Replace SEARCH_TERMS with relevant keywords (e.g., "modern office business")
-   Replace DESCRIPTIVE_ALT_TEXT with proper alt text for accessibility
-9. ONLY respond in this exact JSON format:
+When MODIFYING an existing website:
+1. Only apply the specific changes requested by the user
+2. Keep all other elements and styling exactly as they are
+3. Preserve the overall structure and layout
+4. Return the ENTIRE HTML with only the requested changes
+5. If asked to change text, only update that specific text
+6. If asked to change colors, only update those specific color classes
+7. If asked to change layout, try to minimize changes to surrounding elements
+
+When CREATING a new website:
+1. Focus on modern, clean, and professional design
+2. Ensure responsive design works on all screen sizes
+3. Follow accessibility best practices (WCAG)
+4. Use semantic HTML elements
+5. Use Tailwind CSS classes for ALL styling
+6. Include proper viewport meta tags and content structure
+7. Include images in appropriate sections
+
+For images, ALWAYS use this format:
+<unsplash-image query="SEARCH_TERMS" alt="DESCRIPTIVE_ALT_TEXT" />
+
+ALWAYS respond in this exact JSON format:
 {
-  "html": "<The complete HTML code for the website>",
+  "html": "<The complete HTML code>",
   "css": "",
-  "message": "A brief description of what was created or modified",
-  "isNewWebsite": true
+  "explanation": "Brief explanation of what was changed or created"
 }
 
-STYLING GUIDELINES:
-
-Tailwind:
-- Use Tailwind's utility classes for ALL styling
-- Follow mobile-first responsive design (sm:, md:, lg:)
+Tailwind Guidelines:
 - Use proper spacing utilities (p-4, m-2, etc.)
 - Use flex and grid utilities for layout
 - Use proper text utilities for typography
 - Common patterns:
   - Container: container mx-auto px-4
   - Flex layout: flex items-center justify-between
-  - Grid layout: grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6
-  - Text styles: text-sm text-neutral-600 hover:text-neutral-900
+  - Grid layout: grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4
   - Spacing: space-y-4 gap-8 p-4 my-8
 
-Layout:
-- Use semantic HTML (nav, main, section, article, etc.)
-- Maintain proper heading hierarchy (h1, h2, etc.)
-- Create responsive designs that work on all devices
-- Use proper padding and margin for spacing
-- Structure sections with container and max-width
+Example of targeted changes:
+1. "Change the heading to 'Welcome'"
+   - Only update the text content of that specific heading
+   - Keep all classes and surrounding elements unchanged
 
-Components:
-- Navigation: Fixed header with backdrop blur
-- Buttons: Proper padding, hover states
-- Cards: Consistent spacing, subtle shadows
-- Lists: Proper gap spacing
-- Images:
-  - Always use aspect-ratio containers
-  - Always include loading="lazy" for below-the-fold images
-  - Always use descriptive alt text
-  - Always use object-cover for images
-  - Use relevant search terms for the context
+2. "Make the button blue"
+   - Only update the color classes on that specific button
+   - Keep all other classes and attributes unchanged
 
-Example image usage for a business website:
-<div class="aspect-video rounded-lg overflow-hidden">
-  <unsplash-image query="modern office business professional" alt="Modern office space with professionals collaborating" />
-</div>
-
-Example card with image for a restaurant website:
-<div class="rounded-lg overflow-hidden shadow-lg">
-  <div class="aspect-[4/3]">
-    <unsplash-image query="gourmet restaurant food cuisine" alt="Delicious gourmet dish presentation" />
-  </div>
-  <div class="p-4">
-    <h3 class="text-lg font-semibold">Our Specialties</h3>
-    <p class="text-neutral-600">Experience our unique culinary creations</p>
-  </div>
-</div>
-
-Image Search Terms by Website Type:
-- Business/Corporate: modern office business professional corporate
-- Restaurant: restaurant food cuisine dining gourmet
-- Portfolio: creative design art studio workspace
-- Real Estate: modern home architecture interior luxury
-- E-commerce: product lifestyle shopping retail
-- Travel: travel landscape destination scenic
-- Technology: technology modern innovation tech
-- Health/Fitness: fitness health workout gym wellness
-- Education: education learning students campus library
-- Personal Blog: lifestyle personal blogging coffee workspace`
+3. "Add a new section below the hero"
+   - Keep the hero section exactly as is
+   - Insert the new section after it
+   - Keep all other sections unchanged`
 
 export const useChatStore = create<ChatStore>()(
   devtools(
@@ -119,6 +89,7 @@ export const useChatStore = create<ChatStore>()(
       error: null,
       currentHtml: null,
       currentCss: null,
+
       sendMessage: async (content: string) => {
         set({ isLoading: true, error: null })
 
@@ -136,12 +107,12 @@ export const useChatStore = create<ChatStore>()(
           const { currentHtml, currentCss } = get()
 
           // Add current website state to the context if it exists
-          const contextMessage =
-            currentHtml && currentCss
-              ? [
-                  {
-                    role: 'system' as const,
-                    content: `Current website state:
+          const contextMessage = currentHtml
+            ? [
+                {
+                  role: 'system' as const,
+                  content: `Current website state:
+
 HTML:
 ${currentHtml}
 
@@ -149,15 +120,25 @@ CSS:
 ${currentCss}
 
 Please modify the above website based on the user's request. Only create a new website if explicitly asked.`,
-                  },
-                ]
-              : []
+                },
+              ]
+            : []
 
-          console.log('Sending request to OpenAI...')
+          // Add a temporary message while we wait for the response
+          set((state) => ({
+            messages: [
+              ...state.messages,
+              {
+                role: 'assistant',
+                content: currentHtml ? 'Modifying your website...' : 'Creating your website...',
+                timestamp: new Date(),
+              },
+            ],
+          }))
+
           const response = await openai.chat.completions.create({
             model: process.env.NEXT_PUBLIC_GPT || 'gpt-4',
             temperature: 0.7,
-            stream: true,
             messages: [
               {
                 role: 'system',
@@ -172,95 +153,97 @@ Please modify the above website based on the user's request. Only create a new w
             ],
           })
 
-          let streamedResponse = ''
-          let tempMessage: Message = {
-            role: 'assistant',
-            content: currentHtml
-              ? 'Modifying your website...'
-              : 'Generating your website...',
-            timestamp: new Date(),
+          const message = response.choices[0].message.content
+
+          if (!message) {
+            throw new Error('No response from OpenAI')
           }
 
-          // Add a temporary message that we'll update as we stream
-          set((state) => ({
-            messages: [...state.messages, tempMessage],
-          }))
+          try {
+            // Clean up the message to ensure valid JSON
+            const cleanMessage = message.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+            const jsonStartIndex = cleanMessage.indexOf('{')
+            const jsonEndIndex = cleanMessage.lastIndexOf('}') + 1
+            const jsonStr = cleanMessage.slice(jsonStartIndex, jsonEndIndex)
 
-          let jsonStartIndex = -1
-          let completeJson = ''
+            const parsedResponse = JSON.parse(jsonStr)
 
-          for await (const chunk of response) {
-            const content = chunk.choices[0]?.delta?.content || ''
-            streamedResponse += content
-
-            // Find the start of the JSON object
-            if (jsonStartIndex === -1) {
-              jsonStartIndex = streamedResponse.indexOf('{')
+            if (!parsedResponse.html || typeof parsedResponse.explanation !== 'string') {
+              throw new Error('Invalid response format')
             }
 
-            if (jsonStartIndex !== -1) {
-              // Extract everything from the JSON start
-              completeJson = streamedResponse.slice(jsonStartIndex)
+            // Extract all image queries
+            const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
+            const matches = [...parsedResponse.html.matchAll(imageRegex)]
 
-              if (completeJson.trim().endsWith('}')) {
-                try {
-                  const parsedResponse = JSON.parse(completeJson)
+            if (matches.length > 0) {
+              const queries = matches.map((match) => match[1])
+              const alts = matches.map((match) => match[2])
 
-                  // Extract all image queries
-                  const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
-                  const matches = [...parsedResponse.html.matchAll(imageRegex)]
+              // Fetch all images
+              const images = await getMultipleUnsplashImages(queries)
 
-                  if (matches.length > 0) {
-                    const queries = matches.map((match) => match[1])
-                    const alts = matches.map((match) => match[2])
+              // Replace image placeholders with actual images
+              let processedHtml = parsedResponse.html
+              images.forEach((image, index) => {
+                const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
+                const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full h-full object-cover" loading="lazy" />`
+                processedHtml = processedHtml.replace(placeholder, imgHtml)
+              })
 
-                    // Fetch all images
-                    const images = await getMultipleUnsplashImages(queries)
-
-                    // Replace image placeholders with actual images
-                    let processedHtml = parsedResponse.html
-                    images.forEach((image, index) => {
-                      const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-                      const imgHtml = `
-                        <img
-                          src="${image.url}"
-                          alt="${alts[index]}"
-                          class="w-full h-full object-cover"
-                          loading="lazy"
-                        />
-                      `
-                      processedHtml = processedHtml.replace(placeholder, imgHtml)
-                    })
-
-                    parsedResponse.html = processedHtml
-                  }
-
-                  // Update the preview store
-                  const updatePreview = usePreviewStore.getState().updatePreview
-                  updatePreview(parsedResponse.html, parsedResponse.css)
-
-                  set((state) => ({
-                    messages: state.messages.map((msg, i) =>
-                      i === state.messages.length - 1
-                        ? { ...msg, content: parsedResponse.message }
-                        : msg
-                    ),
-                    currentHtml: parsedResponse.html,
-                    currentCss: parsedResponse.css,
-                    isLoading: false,
-                  }))
-                  break
-                } catch (e) {
-                  // Ignore parsing errors for incomplete JSON
-                }
-              }
+              parsedResponse.html = processedHtml
             }
+
+            // Update the preview store
+            const updatePreview = usePreviewStore.getState().updatePreview
+            updatePreview(parsedResponse.html, parsedResponse.css || '')
+
+            // Update messages
+            set((state) => ({
+              messages: [
+                ...state.messages.slice(0, -1), // Remove temporary message
+                {
+                  role: 'assistant',
+                  content: parsedResponse.explanation,
+                  timestamp: new Date(),
+                },
+              ],
+              currentHtml: parsedResponse.html,
+              currentCss: parsedResponse.css || '',
+              isLoading: false,
+            }))
+          } catch (e) {
+            console.error('Failed to parse OpenAI response:', e, '\nMessage:', message)
+            set((state) => ({
+              messages: [
+                ...state.messages.slice(0, -1), // Remove temporary message
+                {
+                  role: 'assistant',
+                  content: 'Sorry, I encountered an error while processing the response. Please try again.',
+                  timestamp: new Date(),
+                },
+              ],
+              isLoading: false,
+              error: 'Failed to process response',
+            }))
           }
         } catch (error) {
           console.error('Error:', error)
-          set({ error: 'Failed to generate website', isLoading: false })
+          set((state) => ({
+            messages: [
+              ...state.messages,
+              {
+                role: 'assistant',
+                content: 'Sorry, I encountered an error. Please try again.',
+                timestamp: new Date(),
+              },
+            ],
+            error: 'Failed to generate website',
+            isLoading: false,
+          }))
         }
       },
+
       setError: (error) => set({ error }),
     }),
     {
