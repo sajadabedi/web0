@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "../ui/button"
 import * as ScrollArea from "@radix-ui/react-scroll-area"
 import * as Tabs from "@radix-ui/react-tabs"
-import { MessageSquare, History, Maximize2, Minimize2, Command } from "lucide-react"
+import { MessageSquare, History, Maximize2, Minimize2 } from "lucide-react"
 import { useKeyboardShortcut } from "@/lib/hooks/use-keyboard-shortcut"
 import { useChatStore } from "@/lib/hooks/use-chat"
 
@@ -133,21 +133,15 @@ export function ChatInterface() {
 
             <div className="sticky bottom-0 bg-background border-t p-4">
               <form onSubmit={handleSubmit}>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="Describe the website you want to build..."
-                      className="w-full p-2 pr-8 rounded-md border bg-background"
-                      disabled={isLoading}
-                    />
-                    <Command className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
-                  </div>
-                  <Button type="submit" disabled={isLoading}>
-                    {isLoading ? "Generating..." : "Build"}
-                  </Button>
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Describe the website you want to build..."
+                    className="w-full p-2 rounded-md border bg-background"
+                    disabled={isLoading}
+                  />
                 </div>
               </form>
             </div>

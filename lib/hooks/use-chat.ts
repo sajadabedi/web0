@@ -35,7 +35,9 @@ IMPORTANT RULES:
 4. For content changes (text, headings, paragraphs), preserve the HTML structure and only update the text content
 5. ALWAYS use Tailwind CSS classes for ALL styling - DO NOT use custom CSS
 6. ALWAYS include proper viewport meta tags and content structure
-7. ONLY respond in this exact JSON format:
+7. For each image in the website, use the <image /> tag where you want an image to appear.
+   The tag will be replaced with a random image from Unsplash.
+8. ONLY respond in this exact JSON format:
 {
   "html": "<The complete HTML code for the website>",
   "css": "",
