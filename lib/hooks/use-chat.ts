@@ -4,6 +4,7 @@ import OpenAI from 'openai'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
+import { getMultipleUnsplashImages } from '../utils/unsplash'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -35,9 +36,12 @@ IMPORTANT RULES:
 4. For content changes (text, headings, paragraphs), preserve the HTML structure and only update the text content
 5. ALWAYS use Tailwind CSS classes for ALL styling - DO NOT use custom CSS
 6. ALWAYS include proper viewport meta tags and content structure
-7. For each image in the website, use the <image /> tag where you want an image to appear.
-   The tag will be replaced with a random image from Unsplash.
-8. ONLY respond in this exact JSON format:
+7. ALWAYS include images in appropriate sections (hero, cards, galleries) unless specifically asked not to
+8. For images, use this EXACT format:
+   <unsplash-image query="SEARCH_TERMS" alt="DESCRIPTIVE_ALT_TEXT" />
+   Replace SEARCH_TERMS with relevant keywords (e.g., "modern office business")
+   Replace DESCRIPTIVE_ALT_TEXT with proper alt text for accessibility
+9. ONLY respond in this exact JSON format:
 {
   "html": "<The complete HTML code for the website>",
   "css": "",
@@ -72,33 +76,40 @@ Components:
 - Buttons: Proper padding, hover states
 - Cards: Consistent spacing, subtle shadows
 - Lists: Proper gap spacing
-- Images: Proper aspect ratios, object-fit
+- Images:
+  - Always use aspect-ratio containers
+  - Always include loading="lazy" for below-the-fold images
+  - Always use descriptive alt text
+  - Always use object-cover for images
+  - Use relevant search terms for the context
 
-Example HTML Structure:
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Website Title</title>
-  </head>
-  <body class="bg-white">
-    <nav class="fixed w-full bg-white/80 backdrop-blur-md border-b z-50">
-      <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-        <a href="#" class="text-xl font-semibold">Brand</a>
-        <div class="flex items-center gap-6">
-          <a href="#" class="text-sm text-neutral-600 hover:text-neutral-900">Link</a>
-        </div>
-      </div>
-    </nav>
-    <main class="pt-20">
-      <div class="container mx-auto px-4">
-        <h1 class="text-4xl font-bold">Heading</h1>
-        <p class="mt-4 text-lg text-neutral-600">Content</p>
-      </div>
-    </main>
-  </body>
-</html>`
+Example image usage for a business website:
+<div class="aspect-video rounded-lg overflow-hidden">
+  <unsplash-image query="modern office business professional" alt="Modern office space with professionals collaborating" />
+</div>
+
+Example card with image for a restaurant website:
+<div class="rounded-lg overflow-hidden shadow-lg">
+  <div class="aspect-[4/3]">
+    <unsplash-image query="gourmet restaurant food cuisine" alt="Delicious gourmet dish presentation" />
+  </div>
+  <div class="p-4">
+    <h3 class="text-lg font-semibold">Our Specialties</h3>
+    <p class="text-neutral-600">Experience our unique culinary creations</p>
+  </div>
+</div>
+
+Image Search Terms by Website Type:
+- Business/Corporate: modern office business professional corporate
+- Restaurant: restaurant food cuisine dining gourmet
+- Portfolio: creative design art studio workspace
+- Real Estate: modern home architecture interior luxury
+- E-commerce: product lifestyle shopping retail
+- Travel: travel landscape destination scenic
+- Technology: technology modern innovation tech
+- Health/Fitness: fitness health workout gym wellness
+- Education: education learning students campus library
+- Personal Blog: lifestyle personal blogging coffee workspace`
 
 export const useChatStore = create<ChatStore>()(
   devtools(
@@ -144,7 +155,7 @@ Please modify the above website based on the user's request. Only create a new w
 
           console.log('Sending request to OpenAI...')
           const response = await openai.chat.completions.create({
-            model: 'gpt-4',
+            model: process.env.NEXT_PUBLIC_GPT || 'gpt-4',
             temperature: 0.7,
             stream: true,
             messages: [
@@ -194,50 +205,66 @@ Please modify the above website based on the user's request. Only create a new w
               if (completeJson.trim().endsWith('}')) {
                 try {
                   const parsedResponse = JSON.parse(completeJson)
-                  if (parsedResponse.html && parsedResponse.message) {
-                    console.log('Valid response received')
 
-                    // Update the preview and store the current state
-                    const updatePreview = usePreviewStore.getState().updatePreview
-                    updatePreview(parsedResponse.html, parsedResponse.css)
-                    set({
-                      currentHtml: parsedResponse.html,
-                      currentCss: parsedResponse.css,
+                  // Extract all image queries
+                  const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
+                  const matches = [...parsedResponse.html.matchAll(imageRegex)]
+                  
+                  if (matches.length > 0) {
+                    const queries = matches.map(match => match[1])
+                    const alts = matches.map(match => match[2])
+                    
+                    // Fetch all images
+                    const images = await getMultipleUnsplashImages(queries)
+                    
+                    // Replace image placeholders with actual images
+                    let processedHtml = parsedResponse.html
+                    images.forEach((image, index) => {
+                      const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
+                      const imgHtml = `
+                        <img 
+                          src="${image.url}" 
+                          alt="${alts[index]}"
+                          class="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                        <div class="text-xs text-gray-500 mt-1">
+                          Photo by <a href="${image.credit.link}" target="_blank" rel="noopener noreferrer" class="underline">${image.credit.name}</a> on Unsplash
+                        </div>
+                      `
+                      processedHtml = processedHtml.replace(placeholder, imgHtml)
                     })
 
-                    // Update the final message
-                    tempMessage.content = parsedResponse.message
-                    set((state) => {
-                      const messages = [...state.messages]
-                      messages[messages.length - 1] = { ...tempMessage }
-                      return { messages, isLoading: false }
-                    })
-                    return
+                    parsedResponse.html = processedHtml
                   }
-                } catch (error) {
-                  // Only throw if we've waited for a complete response
-                  if (!streamedResponse.includes('"message":')) {
-                    console.debug('Partial response, continuing to stream...')
-                  } else {
-                    throw new Error('Invalid JSON format in response')
-                  }
+
+                  // Update the preview store
+                  const updatePreview = usePreviewStore.getState().updatePreview
+                  updatePreview(parsedResponse.html, parsedResponse.css)
+
+                  set((state) => ({
+                    messages: state.messages.map((msg, i) =>
+                      i === state.messages.length - 1
+                        ? { ...msg, content: parsedResponse.message }
+                        : msg
+                    ),
+                    currentHtml: parsedResponse.html,
+                    currentCss: parsedResponse.css,
+                    isLoading: false,
+                  }))
+                  break
+                } catch (e) {
+                  // Ignore parsing errors for incomplete JSON
                 }
               }
             }
           }
-
-          throw new Error('No valid JSON response received from OpenAI')
         } catch (error) {
-          console.error('Chat error:', error)
-          const errorMessage =
-            error instanceof Error ? error.message : 'Failed to generate website'
-          set({
-            error: `Error: ${errorMessage}. Please try again.`,
-            isLoading: false,
-          })
+          console.error('Error:', error)
+          set({ error: 'Failed to generate website', isLoading: false })
         }
       },
-      setError: (error: string | null) => set({ error }),
+      setError: (error) => set({ error }),
     }),
     {
       name: 'chat-store',
