@@ -8,11 +8,31 @@ import { PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useState } from 'react'
 
 const EXAMPLE_PROMPTS = [
-  'Build a modern portfolio website',
-  'Create a landing page for a fitness app',
-  'Make a simple blog layout',
-  'Design a restaurant website',
-  'Build a photography portfolio',
+  {
+    label: 'Modern Portfolio',
+    prompt:
+      'Build a modern portfolio website with a hero section, about me, skills section, and a projects grid. Each project should have an image, title, description, and tech stack used. Use a minimalist design with smooth animations.',
+  },
+  {
+    label: 'Fitness App',
+    prompt:
+      'Create a landing page for a fitness app with sections for features, workout plans, testimonials, and pricing. Include high-quality fitness-related images, clear call-to-actions, and a mobile-first responsive design.',
+  },
+  {
+    label: 'Blog',
+    prompt:
+      'Make a simple blog layout with a featured post section, recent posts grid, categories sidebar, and newsletter signup. Each post should have a cover image, title, excerpt, and reading time estimate.',
+  },
+  {
+    label: 'Restaurant',
+    prompt:
+      "Design a restaurant website with an elegant hero section showcasing signature dishes, menu categories with food images, about section with the restaurant's story, and a reservation form. Include opening hours and location.",
+  },
+  {
+    label: 'Photography',
+    prompt:
+      'Build a photography portfolio with a masonry grid gallery, about section, services offered, and contact form. Include image hover effects, lightbox for full-size viewing, and smooth transitions between sections.',
+  },
 ]
 
 export function ChatInterface() {
@@ -83,20 +103,19 @@ export function ChatInterface() {
             <ScrollArea.Viewport className="h-full">
               <div className="pb-4">
                 {messages.length === 0 ? (
-                  <div className="p-4 space-y-4">
-                    <p className="text-sm">
-                      Start by describing the website you want to build, or try one of
-                      these examples:
+                  <div className="h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-4 space-y-4">
+                    <p className="text-sm text-center text-gray-600 dark:text-neutral-400">
+                      Describe your website in a few sentences or use example
                     </p>
-                    <div className="space-y-2">
-                      {EXAMPLE_PROMPTS.map((prompt) => (
+                    <div className="w-full max-w-sm flex flex-wrap gap-2">
+                      {EXAMPLE_PROMPTS.map(({ label, prompt }) => (
                         <button
-                          key={prompt}
+                          key={label}
                           onClick={() => handleExampleClick(prompt)}
-                          className="w-full text-left p-2 text-sm rounded-md"
+                          className="px-3 py-1 text-gray-600 dark:text-neutral-400 text-sm bg-gray-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                           disabled={isLoading}
                         >
-                          {prompt}
+                          {label}
                         </button>
                       ))}
                     </div>
