@@ -1,7 +1,8 @@
-"use client"
+'use client'
 
-import { usePreviewStore } from "@/lib/stores/use-preview-store"
-import { useEffect, useRef } from "react"
+import { usePreviewStore } from '@/lib/stores/use-preview-store'
+import { useEffect, useRef } from 'react'
+import { Globe } from 'lucide-react'
 
 export function SitePreview() {
   const { html, css } = usePreviewStore()
@@ -41,7 +42,7 @@ export function SitePreview() {
               margin: 0;
               padding: 0;
             }
-            
+
             body {
               font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
               line-height: 1.5;
@@ -59,10 +60,11 @@ export function SitePreview() {
   }, [html, css])
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden border bg-white relative">
+    <div className="h-full w-full rounded-lg overflow-hidden border bg-white dark:bg-neutral-900 relative dark:border-neutral-800 text-gray-600">
       {!html && !css ? (
-        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-          Describe the website you want to build in the chat
+        <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-muted-foreground dark:text-neutral-500 text-sm">
+          <Globe className="mr-2 h-4 w-4" />
+          Preview will appear here
         </div>
       ) : (
         <iframe
