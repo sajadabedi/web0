@@ -40,10 +40,10 @@ export function ChatInterface() {
 
   const handleExampleClick = async (prompt: string) => {
     if (isLoading) return
-    
+
     // Clear any existing input
     setInputValue('')
-    
+
     try {
       await sendMessage(prompt)
     } catch (error) {
@@ -81,12 +81,12 @@ export function ChatInterface() {
         <div className="h-full flex flex-col pt-12">
           <ScrollArea.Root className="flex-1 overflow-hidden">
             <ScrollArea.Viewport className="h-full">
-              <div className="pb-4"> 
+              <div className="pb-4">
                 {messages.length === 0 ? (
                   <div className="p-4 space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Start by describing the website you want to build, or try one of these
-                      examples:
+                      Start by describing the website you want to build, or try one of
+                      these examples:
                     </p>
                     <div className="space-y-2">
                       {EXAMPLE_PROMPTS.map((prompt) => (
@@ -106,17 +106,17 @@ export function ChatInterface() {
                     {messages.map((msg, i) => (
                       <div
                         key={i}
-                        className={`p-3 rounded-lg ${
-                          msg.role === 'user' ? 'bg-primary/10 ml-4' : 'bg-muted mr-4'
+                        className={`flex ${
+                          msg.role === 'user' ? 'justify-end' : 'justify-start'
                         }`}
                       >
-                        <div className="text-xs text-muted-foreground mb-1">
-                          {msg.role === 'user' ? 'Your Request' : 'Generated Website'}
-                          <span className="ml-2">
-                            {new Date(msg.timestamp).toLocaleTimeString()}
-                          </span>
+                        <div
+                          className={`p-3 rounded-xl text-base max-w-[80%] ${
+                            msg.role === 'user' ? 'bg-gray-100' : 'bg-transparent'
+                          }`}
+                        >
+                          {msg.content}
                         </div>
-                        {msg.content}
                       </div>
                     ))}
                   </div>
