@@ -178,21 +178,21 @@ export function ChatInterface() {
                         variant="ghost"
                         type={isLoading ? 'button' : 'submit'}
                         onClick={isLoading ? handleStop : undefined}
-                        className="absolute right-0 text-black dark:text-white hover:bg-transparent"
+                        className="absolute right-0 group text-black dark:text-white hover:bg-transparent"
                         disabled={!inputValue.trim() && !isLoading}
                       >
                         {isLoading ? (
                           <Square className="h-4 w-4 fill-current" />
                         ) : (
-                          <div className="h-5 w-5 flex items-center justify-center rounded-full bg-black dark:bg-white">
-                            <ArrowUp className="h-3 w-3 text-white" />
+                          <div className="h-5 w-5 group-disabled:opacity-0 flex items-center justify-center rounded-full bg-black dark:bg-white">
+                            <ArrowUp className="h-3 w-3 text-white dark:text-black" />
                           </div>
                         )}
                       </Button>
                     </Tooltip.Trigger>
                     <Tooltip.Portal>
                       <Tooltip.Content
-                        className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+                        className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white dark:text-black shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
                         side="top"
                         align="center"
                         sideOffset={5}
