@@ -9,6 +9,7 @@ import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { ArrowUp, History, PanelRightClose, PanelRightOpen, Square } from 'lucide-react'
 import { useState } from 'react'
+import { LoadingDots } from '../ui/loading-dots'
 
 const EXAMPLE_PROMPTS = [
   {
@@ -155,7 +156,12 @@ export function ChatInterface() {
                               : 'bg-transparent'
                           }`}
                         >
-                          {msg.content}
+                          {msg.content === 'Creating your website...' ||
+                          msg.content === 'Modifying your website...' ? (
+                            <LoadingDots />
+                          ) : (
+                            msg.content
+                          )}
                           {msg.role === 'user' &&
                             versions.some((v) => v.messageId === msg.id) && (
                               <button
@@ -163,7 +169,7 @@ export function ChatInterface() {
                                 className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Revert to this version"
                               >
-                                <History className="w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                                <History className="w-4 h-4" />
                               </button>
                             )}
                         </div>
