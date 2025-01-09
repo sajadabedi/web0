@@ -3,9 +3,10 @@
 import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
-import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
+import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
+import * as Tooltip from '@radix-ui/react-tooltip'
 import { History, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useState } from 'react'
 
@@ -44,8 +45,8 @@ export function ChatInterface() {
   const { revertToVersion } = usePreviewStore()
   const [inputValue, setInputValue] = useState('')
 
-  // Toggle chat with Command+K
-  useKeyboardShortcut('k', () => setIsExpanded((prev) => !prev))
+  // Toggle chat with Command+/
+  useKeyboardShortcut('/', () => setIsExpanded((prev) => !prev))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,41 +77,46 @@ export function ChatInterface() {
   }
 
   const handleRevertToVersion = async (messageId: string) => {
-    const version = versions.find(v => v.messageId === messageId)
+    const version = versions.find((v) => v.messageId === messageId)
     if (!version) return
 
     // First revert the preview to update the website state
     revertToVersion(version.id)
-    
+
     // Then remove messages after this one
     removeMessagesAfter(messageId)
   }
 
   return (
     <div
-      className={`h-full border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
-        isExpanded ? 'w-[400px]' : 'w-12'
+      className={`relative border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
+        isExpanded ? 'w-[400px]' : 'w-[50px]'
       }`}
     >
-      <Button
-        variant="ghost"
-        size="icon"
-        className="absolute left-2 top-2 group text-black dark:text-white"
-        onClick={() => setIsExpanded(!isExpanded)}
-        title={`${isExpanded ? 'Collapse' : 'Expand'} (⌘K)`}
-      >
-        {isExpanded ? (
-          <PanelRightOpen
-            size={18}
-            className="group-hover:scale-110 transition-transform"
-          />
-        ) : (
-          <PanelRightClose
-            size={18}
-            className="group-hover:scale-110 transition-transform"
-          />
-        )}
-      </Button>
+      <Tooltip.Provider delayDuration={400}>
+        <Tooltip.Root>
+          <Tooltip.Trigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-2 top-2 group text-black dark:text-white"
+              onClick={() => setIsExpanded(!isExpanded)}
+            >
+              {isExpanded ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+              side="right"
+              align="center"
+              sideOffset={5}
+            >
+              {isExpanded ? 'Collapse' : 'Expand'} (⌘+/)
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
 
       {isExpanded && (
         <div className="h-full flex flex-col pt-12 text-black dark:text-white">
@@ -152,15 +158,16 @@ export function ChatInterface() {
                           }`}
                         >
                           {msg.content}
-                          {msg.role === 'user' && versions.some(v => v.messageId === msg.id) && (
-                            <button
-                              onClick={() => handleRevertToVersion(msg.id!)}
-                              className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Revert to this version"
-                            >
-                              <History className="w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
-                            </button>
-                          )}
+                          {msg.role === 'user' &&
+                            versions.some((v) => v.messageId === msg.id) && (
+                              <button
+                                onClick={() => handleRevertToVersion(msg.id!)}
+                                className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Revert to this version"
+                              >
+                                <History className="w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                              </button>
+                            )}
                         </div>
                       </div>
                     ))}
