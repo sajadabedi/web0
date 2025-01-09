@@ -1,5 +1,6 @@
 'use client'
 
+import { openai, type Message } from '@/lib/openai-config'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import { SYSTEM_PROMPT } from '@/lib/system-prompt'
 import { v4 as uuidv4 } from 'uuid'
@@ -7,7 +8,6 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 import { getMultipleUnsplashImages } from '../utils/unsplash'
-import { openai, type Message } from '@/lib/openai-config'
 
 interface ChatStore {
   messages: Message[]
@@ -23,6 +23,7 @@ interface ChatStore {
 
 let abortController: AbortController | null = null
 
+// Main chat store with website generation functionality
 export const useChatStore = create<ChatStore>()(
   devtools(
     (set, get) => ({
@@ -31,6 +32,8 @@ export const useChatStore = create<ChatStore>()(
       error: null,
       currentHtml: null,
       currentCss: null,
+
+      // Stop website generation
       stopGeneration: () => {
         if (abortController) {
           abortController.abort()
@@ -38,6 +41,18 @@ export const useChatStore = create<ChatStore>()(
           set({ isLoading: false })
         }
       },
+
+      setError: (error) => set({ error }),
+
+      removeMessagesAfter: (messageId: string) => {
+        set((state) => {
+          const messageIndex = state.messages.findIndex((m) => m.id === messageId)
+          if (messageIndex === -1) return state
+          return { ...state, messages: state.messages.slice(0, messageIndex + 1) }
+        })
+      },
+
+      // Send a new message and generate website
       sendMessage: async (content: string) => {
         if (abortController) {
           abortController.abort()
@@ -53,54 +68,40 @@ export const useChatStore = create<ChatStore>()(
         }
 
         set({ isLoading: true, error: null })
+        set((state) => ({ messages: [...state.messages, newMessage] }))
+
+        // Prepare context for OpenAI
+        const { currentHtml, currentCss } = get()
+        const contextMessage = currentHtml
+          ? [
+              {
+                role: 'system' as const,
+                content: `Current website state:\n\nHTML:\n${currentHtml}\n\nCSS:\n${currentCss}\n\nPlease modify the above website based on the user's request. Only create a new website if explicitly asked.`,
+              },
+            ]
+          : []
+
+        // Add loading message
+        set((state) => ({
+          messages: [
+            ...state.messages,
+            {
+              id: uuidv4(),
+              role: 'assistant',
+              content: currentHtml
+                ? 'Modifying your website...'
+                : 'Creating your website...',
+              timestamp: new Date(),
+            },
+          ],
+        }))
 
         try {
-          set((state) => ({
-            messages: [...state.messages, newMessage],
-          }))
-
-          const { currentHtml, currentCss } = get()
-
-          // Add current website state to the context if it exists
-          const contextMessage = currentHtml
-            ? [
-                {
-                  role: 'system' as const,
-                  content: `Current website state:
-
-HTML:
-${currentHtml}
-
-CSS:
-${currentCss}
-
-Please modify the above website based on the user's request. Only create a new website if explicitly asked.`,
-                },
-              ]
-            : []
-
-          // Add a temporary message while we wait for the response
-          set((state) => ({
-            messages: [
-              ...state.messages,
-              {
-                id: uuidv4(),
-                role: 'assistant',
-                content: currentHtml
-                  ? 'Modifying your website...'
-                  : 'Creating your website...',
-                timestamp: new Date(),
-              },
-            ],
-          }))
-
+          // Generate website with OpenAI
           const response = await openai.chat.completions.create(
             {
               messages: [
-                {
-                  role: 'system',
-                  content: SYSTEM_PROMPT,
-                },
+                { role: 'system', content: SYSTEM_PROMPT },
                 ...contextMessage,
                 ...get().messages.map((msg) => ({
                   role: msg.role,
@@ -115,129 +116,59 @@ Please modify the above website based on the user's request. Only create a new w
             { signal: abortController.signal }
           )
 
+          // Collect streamed response
           let fullMessage = ''
-
-          try {
-            for await (const chunk of response) {
-              const content = chunk.choices[0]?.delta?.content || ''
-              fullMessage += content
-            }
-          } catch (error: any) {
-            if (error.name === 'AbortError') {
-              // Clean up when aborted and return silently
-              set((state) => ({
-                messages: state.messages.slice(0, -1), // Remove the temporary message
-                isLoading: false,
-              }))
-              return
-            }
-            throw error
+          for await (const chunk of response) {
+            const content = chunk.choices[0]?.delta?.content || ''
+            fullMessage += content
           }
 
-          // Don't proceed with JSON parsing if the message is empty or was aborted
-          if (!fullMessage.trim()) {
-            set((state) => ({
-              messages: state.messages.slice(0, -1), // Remove the temporary message
-              isLoading: false,
-            }))
-            return
-          }
+          // Process response and update website
+          const parsedResponse = await parseOpenAIResponse(fullMessage)
 
-          try {
-            // Clean up the message to ensure valid JSON
-            const cleanMessage = fullMessage.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
-            const jsonStartIndex = cleanMessage.indexOf('{')
-            const jsonEndIndex = cleanMessage.lastIndexOf('}') + 1
+          const versionStore = useWebsiteVersionStore.getState()
+          versionStore.addVersion({
+            messageId,
+            timestamp: Date.now(),
+            html: parsedResponse.html,
+            css: parsedResponse.css || '',
+            changes: {
+              type: versionStore.versions.length === 0 ? 'initial' : 'update',
+              description: parsedResponse.explanation,
+            },
+          })
 
-            // Only try to parse if we have a complete JSON object
-            if (jsonStartIndex === -1 || jsonEndIndex <= jsonStartIndex) {
-              set((state) => ({
-                messages: state.messages.slice(0, -1), // Remove the temporary message
-                isLoading: false,
-              }))
-              return
-            }
+          usePreviewStore
+            .getState()
+            .updatePreview(parsedResponse.html, parsedResponse.css || '')
 
-            const jsonStr = cleanMessage.slice(jsonStartIndex, jsonEndIndex)
-
-            const parsedResponse = JSON.parse(jsonStr)
-
-            if (!parsedResponse.html || typeof parsedResponse.explanation !== 'string') {
-              throw new Error('Invalid response format')
-            }
-
-            // Extract all image queries
-            const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
-            const matches = [...parsedResponse.html.matchAll(imageRegex)]
-
-            if (matches.length > 0) {
-              const queries = matches.map((match) => match[1])
-              const alts = matches.map((match) => match[2])
-
-              // Fetch all images
-              const images = await getMultipleUnsplashImages(queries)
-
-              // Replace image placeholders with actual images
-              let processedHtml = parsedResponse.html
-              images.forEach((image, index) => {
-                const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-                const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full h-full object-cover" loading="lazy" />`
-                processedHtml = processedHtml.replace(placeholder, imgHtml)
-              })
-
-              parsedResponse.html = processedHtml
-            }
-
-            // Save version before updating preview
-            const versionStore = useWebsiteVersionStore.getState()
-            const versionId = versionStore.addVersion({
-              messageId,
-              timestamp: Date.now(),
-              html: parsedResponse.html,
-              css: parsedResponse.css || '',
-              changes: {
-                type: versionStore.versions.length === 0 ? 'initial' : 'update',
-                description: parsedResponse.explanation,
+          // Update chat with response
+          set((state) => ({
+            messages: [
+              ...state.messages.slice(0, -1),
+              {
+                id: messageId,
+                role: 'assistant',
+                content: parsedResponse.explanation,
+                timestamp: new Date(),
               },
-            })
-
-            // Update the preview store
-            const updatePreview = usePreviewStore.getState().updatePreview
-            updatePreview(parsedResponse.html, parsedResponse.css || '')
-
-            // Update messages
+            ],
+            currentHtml: parsedResponse.html,
+            currentCss: parsedResponse.css || '',
+            isLoading: false,
+          }))
+        } catch (error: any) {
+          // Handle generation interruption
+          if (error.name === 'AbortError') {
             set((state) => ({
-              messages: [
-                ...state.messages.slice(0, -1), // Remove temporary message
-                {
-                  id: messageId, // Use the same messageId for the assistant message
-                  role: 'assistant',
-                  content: parsedResponse.explanation,
-                  timestamp: new Date(),
-                },
-              ],
-              currentHtml: parsedResponse.html,
-              currentCss: parsedResponse.css || '',
-              isLoading: false,
-            }))
-          } catch (e) {
-            console.error(
-              'Failed to parse OpenAI response:',
-              e,
-              '\nMessage:',
-              fullMessage
-            )
-            set((state) => ({
-              messages: state.messages.slice(0, -1), // Remove the temporary message
+              messages: state.messages.slice(0, -1),
               isLoading: false,
             }))
             return
           }
-        } catch (error) {
+
+          // Handle other errors
           console.error('Error:', error)
-          if (error instanceof DOMException && error.name === 'AbortError') {
-            return
-          }
           set((state) => ({
             messages: [
               ...state.messages,
@@ -255,23 +186,53 @@ Please modify the above website based on the user's request. Only create a new w
           abortController = null
         }
       },
-
-      removeMessagesAfter: (messageId: string) => {
-        set((state) => {
-          const messageIndex = state.messages.findIndex((m) => m.id === messageId)
-          if (messageIndex === -1) return state
-
-          return {
-            ...state,
-            messages: state.messages.slice(0, messageIndex + 1),
-          }
-        })
-      },
-
-      setError: (error) => set({ error }),
     }),
     {
       name: 'chat-store',
     }
   )
 )
+
+// Replace Unsplash image placeholders with actual images
+async function processImages(html: string) {
+  // Regular expression to match Unsplash image placeholders
+  const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
+  const matches = [...html.matchAll(imageRegex)]
+
+  // If no matches, return original HTML
+  if (matches.length === 0) return html
+
+  const queries = matches.map((match) => match[1])
+  const alts = matches.map((match) => match[2])
+  const images = await getMultipleUnsplashImages(queries)
+
+  let processedHtml = html
+  images.forEach((image, index) => {
+    const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
+    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full h-full object-cover" loading="lazy" />`
+    processedHtml = processedHtml.replace(placeholder, imgHtml)
+  })
+
+  return processedHtml
+}
+
+// Extract and validate JSON response from OpenAI stream
+async function parseOpenAIResponse(fullMessage: string) {
+  const cleanMessage = fullMessage.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+  const jsonStartIndex = cleanMessage.indexOf('{')
+  const jsonEndIndex = cleanMessage.lastIndexOf('}') + 1
+
+  if (jsonStartIndex === -1 || jsonEndIndex <= jsonStartIndex) {
+    throw new Error('Invalid JSON response')
+  }
+
+  const jsonStr = cleanMessage.slice(jsonStartIndex, jsonEndIndex)
+  const parsedResponse = JSON.parse(jsonStr)
+
+  if (!parsedResponse.html || typeof parsedResponse.explanation !== 'string') {
+    throw new Error('Invalid response format')
+  }
+
+  parsedResponse.html = await processImages(parsedResponse.html)
+  return parsedResponse
+}
