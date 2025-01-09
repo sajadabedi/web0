@@ -1,12 +1,12 @@
 'use client'
 
+import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import OpenAI from 'openai'
+import { v4 as uuidv4 } from 'uuid'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 import { getMultipleUnsplashImages } from '../utils/unsplash'
-import { v4 as uuidv4 } from 'uuid'
-import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 
 interface Message {
   id: string
@@ -63,12 +63,12 @@ ALWAYS respond in this exact JSON format:
 
 Tailwind Guidelines:
 - Use proper spacing utilities (p-4, m-2, etc.)
-- Use flex and grid utilities for layout
+- Use flex for layout
 - Use proper text utilities for typography
+- Make sure there's enough spacing between sections
 - Common patterns:
   - Container: container mx-auto px-4
   - Flex layout: flex items-center justify-between
-  - Grid layout: grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4
   - Spacing: space-y-4 gap-8 p-4 my-8
 
 Example of targeted changes:
