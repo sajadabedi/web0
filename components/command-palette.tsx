@@ -23,7 +23,7 @@ export function CommandPalette() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-lg overflow-hidden bg-white dark:bg-neutral-800 p-0 shadow-lg">
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-xl -translate-x-1/2 -translate-y-1/2 rounded-lg overflow-hidden bg-white dark:bg-neutral-800 p-0 shadow-lg">
           <Dialog.Title className="sr-only">Command Menu</Dialog.Title>
           <Command className="relative" shouldFilter={false}>
             <Command.Input
@@ -35,13 +35,11 @@ export function CommandPalette() {
                   handleSubmit(input)
                 }
               }}
-              placeholder={
-                currentHtml ? 'Describe your changes...' : 'Describe your ask...'
-              }
+              placeholder={'Describe your ask...'}
               className="flex h-14 w-full caret-pink-500 text-black dark:text-white rounded-lg border-0 bg-transparent px-4 outline-none placeholder:text-neutral-500 focus:ring-0 dark:placeholder:text-neutral-400"
             />
-            <Command.List className="max-h-[300px] overflow-y-auto p-4 border-t-[0.5px] border-neutral-200 dark:border-neutral-700/70 bg-gray-50 dark:bg-neutral-900">
-              {!currentHtml && (
+            {!currentHtml && (
+              <Command.List className="max-h-[300px] overflow-y-auto p-4 border-t-[0.5px] border-neutral-200 dark:border-neutral-700/70 bg-gray-50 dark:bg-neutral-900">
                 <>
                   <div className="mb-2 text-[11px] tracking-widest uppercase font-medium text-neutral-500 dark:text-neutral-400">
                     Starter templates
@@ -58,8 +56,8 @@ export function CommandPalette() {
                     ))}
                   </div>
                 </>
-              )}
-            </Command.List>
+              </Command.List>
+            )}
           </Command>
         </Dialog.Content>
       </Dialog.Portal>
