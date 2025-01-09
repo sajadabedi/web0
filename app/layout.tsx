@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
+import { CommandPalette } from '@/components/command-palette'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -26,6 +27,7 @@ export default function RootLayout({
     <html lang="en" className="text-white dark:text-black bg-white dark:bg-black">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <CommandPalette />
       </body>
     </html>
   )
