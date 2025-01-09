@@ -5,8 +5,11 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 import { getMultipleUnsplashImages } from '../utils/unsplash'
+import { v4 as uuidv4 } from 'uuid'
+import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 
 interface Message {
+  id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
@@ -20,6 +23,7 @@ interface ChatStore {
   currentCss: string | null
   sendMessage: (content: string) => Promise<void>
   setError: (error: string | null) => void
+  removeMessagesAfter: (messageId: string) => void
 }
 
 const openai = new OpenAI({
@@ -91,15 +95,17 @@ export const useChatStore = create<ChatStore>()(
       currentCss: null,
 
       sendMessage: async (content: string) => {
+        const messageId = uuidv4()
+        const newMessage: Message = {
+          id: messageId,
+          role: 'user',
+          content,
+          timestamp: new Date(),
+        }
+
         set({ isLoading: true, error: null })
 
         try {
-          const newMessage: Message = {
-            role: 'user',
-            content,
-            timestamp: new Date(),
-          }
-
           set((state) => ({
             messages: [...state.messages, newMessage],
           }))
@@ -129,16 +135,17 @@ Please modify the above website based on the user's request. Only create a new w
             messages: [
               ...state.messages,
               {
+                id: uuidv4(),
                 role: 'assistant',
-                content: currentHtml ? 'Modifying your website...' : 'Creating your website...',
+                content: currentHtml
+                  ? 'Modifying your website...'
+                  : 'Creating your website...',
                 timestamp: new Date(),
               },
             ],
           }))
 
           const response = await openai.chat.completions.create({
-            model: process.env.NEXT_PUBLIC_GPT || 'gpt-4',
-            temperature: 0.7,
             messages: [
               {
                 role: 'system',
@@ -151,6 +158,8 @@ Please modify the above website based on the user's request. Only create a new w
               })),
               { role: 'user', content },
             ],
+            model: process.env.NEXT_PUBLIC_GPT || 'gpt-4',
+            temperature: 0.7,
           })
 
           const message = response.choices[0].message.content
@@ -194,6 +203,19 @@ Please modify the above website based on the user's request. Only create a new w
               parsedResponse.html = processedHtml
             }
 
+            // Save version before updating preview
+            const versionStore = useWebsiteVersionStore.getState()
+            const versionId = versionStore.addVersion({
+              messageId,
+              timestamp: Date.now(),
+              html: parsedResponse.html,
+              css: parsedResponse.css || '',
+              changes: {
+                type: versionStore.versions.length === 0 ? 'initial' : 'update',
+                description: parsedResponse.explanation,
+              },
+            })
+
             // Update the preview store
             const updatePreview = usePreviewStore.getState().updatePreview
             updatePreview(parsedResponse.html, parsedResponse.css || '')
@@ -203,6 +225,7 @@ Please modify the above website based on the user's request. Only create a new w
               messages: [
                 ...state.messages.slice(0, -1), // Remove temporary message
                 {
+                  id: messageId, // Use the same messageId for the assistant message
                   role: 'assistant',
                   content: parsedResponse.explanation,
                   timestamp: new Date(),
@@ -218,8 +241,10 @@ Please modify the above website based on the user's request. Only create a new w
               messages: [
                 ...state.messages.slice(0, -1), // Remove temporary message
                 {
+                  id: uuidv4(),
                   role: 'assistant',
-                  content: 'Sorry, I encountered an error while processing the response. Please try again.',
+                  content:
+                    'Sorry, I encountered an error while processing the response. Please try again.',
                   timestamp: new Date(),
                 },
               ],
@@ -233,6 +258,7 @@ Please modify the above website based on the user's request. Only create a new w
             messages: [
               ...state.messages,
               {
+                id: uuidv4(),
                 role: 'assistant',
                 content: 'Sorry, I encountered an error. Please try again.',
                 timestamp: new Date(),
@@ -242,6 +268,18 @@ Please modify the above website based on the user's request. Only create a new w
             isLoading: false,
           }))
         }
+      },
+
+      removeMessagesAfter: (messageId: string) => {
+        set((state) => {
+          const messageIndex = state.messages.findIndex((m) => m.id === messageId)
+          if (messageIndex === -1) return state
+
+          return {
+            ...state,
+            messages: state.messages.slice(0, messageIndex + 1),
+          }
+        })
       },
 
       setError: (error) => set({ error }),

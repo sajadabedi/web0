@@ -3,8 +3,10 @@
 import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
+import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
+import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
-import { PanelRightClose, PanelRightOpen } from 'lucide-react'
+import { History, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useState } from 'react'
 
 const EXAMPLE_PROMPTS = [
@@ -37,7 +39,9 @@ const EXAMPLE_PROMPTS = [
 
 export function ChatInterface() {
   const [isExpanded, setIsExpanded] = useState(true)
-  const { messages, sendMessage, isLoading } = useChatStore()
+  const { messages, sendMessage, isLoading, removeMessagesAfter } = useChatStore()
+  const { versions } = useWebsiteVersionStore()
+  const { revertToVersion } = usePreviewStore()
   const [inputValue, setInputValue] = useState('')
 
   // Toggle chat with Command+K
@@ -69,6 +73,17 @@ export function ChatInterface() {
     } catch (error) {
       console.error('Failed to send example message:', error)
     }
+  }
+
+  const handleRevertToVersion = async (messageId: string) => {
+    const version = versions.find(v => v.messageId === messageId)
+    if (!version) return
+
+    // First revert the preview to update the website state
+    revertToVersion(version.id)
+    
+    // Then remove messages after this one
+    removeMessagesAfter(messageId)
   }
 
   return (
@@ -130,13 +145,22 @@ export function ChatInterface() {
                         }`}
                       >
                         <div
-                          className={`p-3 rounded-xl text-base ${
+                          className={`group relative p-3 rounded-xl text-base ${
                             msg.role === 'user'
                               ? 'bg-gray-100 text-black dark:text-white dark:bg-neutral-800 max-w-[80%]'
                               : 'bg-transparent'
                           }`}
                         >
                           {msg.content}
+                          {msg.role === 'user' && versions.some(v => v.messageId === msg.id) && (
+                            <button
+                              onClick={() => handleRevertToVersion(msg.id!)}
+                              className="absolute -left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Revert to this version"
+                            >
+                              <History className="w-4 h-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

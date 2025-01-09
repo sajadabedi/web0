@@ -1,12 +1,14 @@
 'use client'
 
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
+import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import { useEffect, useRef } from 'react'
 import { Globe } from 'lucide-react'
 
 export function SitePreview() {
-  const { html, css } = usePreviewStore()
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const { html, css } = usePreviewStore()
+  const { getCurrentVersion } = useWebsiteVersionStore()
 
   useEffect(() => {
     if (!iframeRef.current) return
@@ -14,27 +16,19 @@ export function SitePreview() {
     const doc = iframeRef.current.contentDocument
     if (!doc) return
 
-    // Add default styles and meta tags
-    doc.open()
-    doc.write(`
+    // Get the current version if available
+    const currentVersion = getCurrentVersion()
+    const finalHtml = currentVersion?.html || html
+    const finalCss = currentVersion?.css || css
+
+    // Create a clean document with sandboxed scripts
+    const content = `
       <!DOCTYPE html>
       <html>
         <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-          <script src="https://cdn.tailwindcss.com"></script>
-          <script>
-            tailwind.config = {
-              theme: {
-                extend: {
-                  fontFamily: {
-                    sans: ['Inter', 'system-ui', 'sans-serif'],
-                  },
-                },
-              },
-            }
-          </script>
           <style>
             /* Reset default styles */
             *, *::before, *::after {
@@ -44,20 +38,45 @@ export function SitePreview() {
             }
 
             body {
-              font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              font-family: 'Inter', system-ui, -apple-system, sans-serif;
               line-height: 1.5;
               -webkit-font-smoothing: antialiased;
             }
 
-            /* Custom styles */
-            ${css}
+            ${finalCss}
           </style>
         </head>
-        <body>${html}</body>
+        <body>
+          ${finalHtml}
+          <script>
+            // Sandbox any scripts in a closure to avoid global scope pollution
+            (function() {
+              // Initialize Tailwind in an isolated scope
+              const tailwindScript = document.createElement('script');
+              tailwindScript.src = 'https://cdn.tailwindcss.com';
+              tailwindScript.onload = function() {
+                window.tailwind.config = {
+                  theme: {
+                    extend: {
+                      fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                      },
+                    },
+                  },
+                };
+              };
+              document.head.appendChild(tailwindScript);
+            })();
+          </script>
+        </body>
       </html>
-    `)
+    `
+
+    // Write the content to the iframe
+    doc.open()
+    doc.write(content)
     doc.close()
-  }, [html, css])
+  }, [html, css, getCurrentVersion])
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden border bg-white dark:bg-neutral-900 relative dark:border-neutral-800 text-gray-600">
