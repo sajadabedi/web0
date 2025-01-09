@@ -123,10 +123,10 @@ export function ChatInterface() {
               <div className="pb-4">
                 {messages.length === 0 ? (
                   <div className="h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-4 space-y-4">
-                    <p className="text-sm text-center text-gray-600 dark:text-neutral-400">
-                      Describe your website in a few sentences or use example
+                    <p className="text-sm text-center text-gray-600 dark:text-neutral-400 w-[80%]">
+                      Starter templates to get you started.
                     </p>
-                    <div className="w-full max-w-sm flex flex-wrap gap-2">
+                    <div className="w-full max-w-sm justify-center flex flex-wrap gap-2">
                       {EXAMPLE_PROMPTS.map(({ label, prompt }) => (
                         <button
                           key={label}
