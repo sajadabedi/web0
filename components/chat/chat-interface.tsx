@@ -7,7 +7,7 @@ import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Tooltip from '@radix-ui/react-tooltip'
-import { History, PanelRightClose, PanelRightOpen } from 'lucide-react'
+import { ArrowUp, History, PanelRightClose, PanelRightOpen, Square } from 'lucide-react'
 import { useState } from 'react'
 
 const EXAMPLE_PROMPTS = [
@@ -40,7 +40,8 @@ const EXAMPLE_PROMPTS = [
 
 export function ChatInterface() {
   const [isExpanded, setIsExpanded] = useState(true)
-  const { messages, sendMessage, isLoading, removeMessagesAfter } = useChatStore()
+  const { messages, sendMessage, isLoading, removeMessagesAfter, stopGeneration } =
+    useChatStore()
   const { versions } = useWebsiteVersionStore()
   const { revertToVersion } = usePreviewStore()
   const [inputValue, setInputValue] = useState('')
@@ -50,17 +51,14 @@ export function ChatInterface() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmedValue = inputValue.trim()
-    if (!trimmedValue || isLoading) return
+    if (!inputValue.trim() || isLoading) return
 
-    // Clear input immediately
     setInputValue('')
+    await sendMessage(inputValue)
+  }
 
-    try {
-      await sendMessage(trimmedValue)
-    } catch (error) {
-      console.error('Failed to send message:', error)
-    }
+  const handleStop = () => {
+    stopGeneration()
   }
 
   const handleExampleClick = async (prompt: string) => {
@@ -184,15 +182,48 @@ export function ChatInterface() {
           </ScrollArea.Root>
 
           <div className="border-t dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
-            <form onSubmit={handleSubmit} className="p-4">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Describe your website..."
-                className="w-full px-3 py-2 text-sm rounded-md bg-transparent caret-pink-500 text-black dark:text-white focus:outline-none"
-                disabled={isLoading}
-              />
+            <form onSubmit={handleSubmit} className="p-3">
+              <div className="relative flex items-center">
+                <input
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  placeholder="Describe your website..."
+                  className="w-full px-3 font-[450] py-2 text-sm rounded-md bg-transparent caret-pink-500 text-black dark:text-white focus:outline-none"
+                  disabled={isLoading}
+                />
+                <Tooltip.Provider delayDuration={400}>
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        type={isLoading ? 'button' : 'submit'}
+                        onClick={isLoading ? handleStop : undefined}
+                        className="absolute right-0 text-black dark:text-white hover:bg-transparent"
+                        disabled={!inputValue.trim() && !isLoading}
+                      >
+                        {isLoading ? (
+                          <Square className="h-4 w-4 fill-current" />
+                        ) : (
+                          <div className="h-5 w-5 flex items-center justify-center rounded-full bg-black dark:bg-white">
+                            <ArrowUp className="h-3 w-3 text-white" />
+                          </div>
+                        )}
+                      </Button>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        className="rounded-md bg-neutral-900 px-3 py-1.5 text-xs text-white shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+                        side="top"
+                        align="center"
+                        sideOffset={5}
+                      >
+                        {isLoading ? 'Stop generating' : 'Send message'}
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
+                </Tooltip.Provider>
+              </div>
             </form>
           </div>
         </div>

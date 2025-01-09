@@ -24,7 +24,10 @@ interface ChatStore {
   sendMessage: (content: string) => Promise<void>
   setError: (error: string | null) => void
   removeMessagesAfter: (messageId: string) => void
+  stopGeneration: () => void
 }
+
+let abortController: AbortController | null = null
 
 const openai = new OpenAI({
   apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
@@ -93,8 +96,19 @@ export const useChatStore = create<ChatStore>()(
       error: null,
       currentHtml: null,
       currentCss: null,
-
+      stopGeneration: () => {
+        if (abortController) {
+          abortController.abort()
+          abortController = null
+          set({ isLoading: false })
+        }
+      },
       sendMessage: async (content: string) => {
+        if (abortController) {
+          abortController.abort()
+        }
+        abortController = new AbortController()
+
         const messageId = uuidv4()
         const newMessage: Message = {
           id: messageId,
@@ -145,34 +159,70 @@ Please modify the above website based on the user's request. Only create a new w
             ],
           }))
 
-          const response = await openai.chat.completions.create({
-            messages: [
-              {
-                role: 'system',
-                content: SYSTEM_PROMPT,
-              },
-              ...contextMessage,
-              ...get().messages.map((msg) => ({
-                role: msg.role,
-                content: msg.content,
-              })),
-              { role: 'user', content },
-            ],
-            model: process.env.NEXT_PUBLIC_GPT || 'gpt-4',
-            temperature: 0.7,
-          })
+          const response = await openai.chat.completions.create(
+            {
+              messages: [
+                {
+                  role: 'system',
+                  content: SYSTEM_PROMPT,
+                },
+                ...contextMessage,
+                ...get().messages.map((msg) => ({
+                  role: msg.role,
+                  content: msg.content,
+                })),
+                { role: 'user', content },
+              ],
+              model: process.env.NEXT_PUBLIC_GPT || 'gpt-4',
+              temperature: 0.7,
+              stream: true,
+            },
+            { signal: abortController.signal }
+          )
 
-          const message = response.choices[0].message.content
+          let fullMessage = ''
 
-          if (!message) {
-            throw new Error('No response from OpenAI')
+          try {
+            for await (const chunk of response) {
+              const content = chunk.choices[0]?.delta?.content || ''
+              fullMessage += content
+            }
+          } catch (error: any) {
+            if (error.name === 'AbortError') {
+              // Clean up when aborted and return silently
+              set((state) => ({
+                messages: state.messages.slice(0, -1), // Remove the temporary message
+                isLoading: false
+              }))
+              return
+            }
+            throw error
+          }
+
+          // Don't proceed with JSON parsing if the message is empty or was aborted
+          if (!fullMessage.trim()) {
+            set((state) => ({
+              messages: state.messages.slice(0, -1), // Remove the temporary message
+              isLoading: false
+            }))
+            return
           }
 
           try {
             // Clean up the message to ensure valid JSON
-            const cleanMessage = message.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
+            const cleanMessage = fullMessage.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
             const jsonStartIndex = cleanMessage.indexOf('{')
             const jsonEndIndex = cleanMessage.lastIndexOf('}') + 1
+            
+            // Only try to parse if we have a complete JSON object
+            if (jsonStartIndex === -1 || jsonEndIndex <= jsonStartIndex) {
+              set((state) => ({
+                messages: state.messages.slice(0, -1), // Remove the temporary message
+                isLoading: false
+              }))
+              return
+            }
+            
             const jsonStr = cleanMessage.slice(jsonStartIndex, jsonEndIndex)
 
             const parsedResponse = JSON.parse(jsonStr)
@@ -236,24 +286,18 @@ Please modify the above website based on the user's request. Only create a new w
               isLoading: false,
             }))
           } catch (e) {
-            console.error('Failed to parse OpenAI response:', e, '\nMessage:', message)
+            console.error('Failed to parse OpenAI response:', e, '\nMessage:', fullMessage)
             set((state) => ({
-              messages: [
-                ...state.messages.slice(0, -1), // Remove temporary message
-                {
-                  id: uuidv4(),
-                  role: 'assistant',
-                  content:
-                    'Sorry, I encountered an error while processing the response. Please try again.',
-                  timestamp: new Date(),
-                },
-              ],
-              isLoading: false,
-              error: 'Failed to process response',
+              messages: state.messages.slice(0, -1), // Remove the temporary message
+              isLoading: false
             }))
+            return
           }
         } catch (error) {
           console.error('Error:', error)
+          if (error instanceof DOMException && error.name === 'AbortError') {
+            return
+          }
           set((state) => ({
             messages: [
               ...state.messages,
@@ -267,6 +311,8 @@ Please modify the above website based on the user's request. Only create a new w
             error: 'Failed to generate website',
             isLoading: false,
           }))
+        } finally {
+          abortController = null
         }
       },
 
