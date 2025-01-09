@@ -1,19 +1,13 @@
 'use client'
 
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
-import OpenAI from 'openai'
+import { SYSTEM_PROMPT } from '@/lib/system-prompt'
 import { v4 as uuidv4 } from 'uuid'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 import { getMultipleUnsplashImages } from '../utils/unsplash'
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-}
+import { openai, type Message } from '@/lib/openai-config'
 
 interface ChatStore {
   messages: Message[]
@@ -28,65 +22,6 @@ interface ChatStore {
 }
 
 let abortController: AbortController | null = null
-
-const openai = new OpenAI({
-  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-})
-
-const SYSTEM_PROMPT = `You are an expert web developer who specializes in creating and modifying websites using Tailwind CSS.
-
-When MODIFYING an existing website:
-1. Only apply the specific changes requested by the user
-2. Keep all other elements and styling exactly as they are
-3. Preserve the overall structure and layout
-4. Return the ENTIRE HTML with only the requested changes
-5. If asked to change text, only update that specific text
-6. If asked to change colors, only update those specific color classes
-7. If asked to change layout, try to minimize changes to surrounding elements
-
-When CREATING a new website:
-1. Focus on modern, clean, and professional design
-2. Ensure responsive design works on all screen sizes
-3. Follow accessibility best practices (WCAG)
-4. Use semantic HTML elements
-5. Use Tailwind CSS classes for ALL styling
-6. Include proper viewport meta tags and content structure
-7. Include images in appropriate sections
-
-For images, ALWAYS use this format:
-<unsplash-image query="SEARCH_TERMS" alt="DESCRIPTIVE_ALT_TEXT" />
-
-ALWAYS respond in this exact JSON format:
-{
-  "html": "<The complete HTML code>",
-  "css": "",
-  "explanation": "Brief explanation of what was changed or created"
-}
-
-Tailwind Guidelines:
-- Use proper spacing utilities (p-4, m-2, etc.)
-- Use flex for layout
-- Use proper text utilities for typography
-- Make sure there's enough spacing between sections
-- Common patterns:
-  - Container: container mx-auto px-4
-  - Flex layout: flex items-center justify-between
-  - Spacing: space-y-4 gap-8 p-4 my-8
-
-Example of targeted changes:
-1. "Change the heading to 'Welcome'"
-   - Only update the text content of that specific heading
-   - Keep all classes and surrounding elements unchanged
-
-2. "Make the button blue"
-   - Only update the color classes on that specific button
-   - Keep all other classes and attributes unchanged
-
-3. "Add a new section below the hero"
-   - Keep the hero section exactly as is
-   - Insert the new section after it
-   - Keep all other sections unchanged`
 
 export const useChatStore = create<ChatStore>()(
   devtools(
@@ -192,7 +127,7 @@ Please modify the above website based on the user's request. Only create a new w
               // Clean up when aborted and return silently
               set((state) => ({
                 messages: state.messages.slice(0, -1), // Remove the temporary message
-                isLoading: false
+                isLoading: false,
               }))
               return
             }
@@ -203,7 +138,7 @@ Please modify the above website based on the user's request. Only create a new w
           if (!fullMessage.trim()) {
             set((state) => ({
               messages: state.messages.slice(0, -1), // Remove the temporary message
-              isLoading: false
+              isLoading: false,
             }))
             return
           }
@@ -213,16 +148,16 @@ Please modify the above website based on the user's request. Only create a new w
             const cleanMessage = fullMessage.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
             const jsonStartIndex = cleanMessage.indexOf('{')
             const jsonEndIndex = cleanMessage.lastIndexOf('}') + 1
-            
+
             // Only try to parse if we have a complete JSON object
             if (jsonStartIndex === -1 || jsonEndIndex <= jsonStartIndex) {
               set((state) => ({
                 messages: state.messages.slice(0, -1), // Remove the temporary message
-                isLoading: false
+                isLoading: false,
               }))
               return
             }
-            
+
             const jsonStr = cleanMessage.slice(jsonStartIndex, jsonEndIndex)
 
             const parsedResponse = JSON.parse(jsonStr)
@@ -286,10 +221,15 @@ Please modify the above website based on the user's request. Only create a new w
               isLoading: false,
             }))
           } catch (e) {
-            console.error('Failed to parse OpenAI response:', e, '\nMessage:', fullMessage)
+            console.error(
+              'Failed to parse OpenAI response:',
+              e,
+              '\nMessage:',
+              fullMessage
+            )
             set((state) => ({
               messages: state.messages.slice(0, -1), // Remove the temporary message
-              isLoading: false
+              isLoading: false,
             }))
             return
           }

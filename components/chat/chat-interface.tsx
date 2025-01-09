@@ -5,39 +5,12 @@ import { useChatStore } from '@/lib/hooks/use-chat'
 import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
+import { EXAMPLE_PROMPTS } from '@/lib/system-prompt'
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { ArrowUp, History, PanelRightClose, PanelRightOpen, Square } from 'lucide-react'
 import { useState } from 'react'
 import { LoadingDots } from '../ui/loading-dots'
-
-const EXAMPLE_PROMPTS = [
-  {
-    label: 'Modern Portfolio',
-    prompt:
-      'Build a modern portfolio website with a hero section, about me, skills section, and a projects grid. Each project should have an image, title, description, and tech stack used. Use a minimalist design with smooth animations.',
-  },
-  {
-    label: 'Fitness App',
-    prompt:
-      'Create a landing page for a fitness app with sections for features, workout plans, testimonials, and pricing. Include high-quality fitness-related images, clear call-to-actions, and a mobile-first responsive design.',
-  },
-  {
-    label: 'Blog',
-    prompt:
-      'Make a simple blog layout with a featured post section, recent posts grid, categories sidebar, and newsletter signup. Each post should have a cover image, title, excerpt, and reading time estimate.',
-  },
-  {
-    label: 'Restaurant',
-    prompt:
-      "Design a restaurant website with an elegant hero section showcasing signature dishes, menu categories with food images, about section with the restaurant's story, and a reservation form. Include opening hours and location.",
-  },
-  {
-    label: 'Photography',
-    prompt:
-      'Build a photography portfolio with a masonry grid gallery, about section, services offered, and contact form. Include image hover effects, lightbox for full-size viewing, and smooth transitions between sections.',
-  },
-]
 
 export function ChatInterface() {
   const [isExpanded, setIsExpanded] = useState(true)
