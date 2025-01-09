@@ -119,7 +119,7 @@ export function ChatInterface() {
       </Tooltip.Provider>
 
       {isExpanded && (
-        <div className="h-full flex flex-col pt-12 text-black dark:text-white">
+        <div className="h-full flex flex-col pt-12 text-black dark:text-white dark:bg-neutral-900 ">
           <ScrollArea.Root className="flex-1 overflow-hidden">
             <ScrollArea.Viewport className="h-full">
               <div className="pb-4">
@@ -151,9 +151,9 @@ export function ChatInterface() {
                         }`}
                       >
                         <div
-                          className={`group relative p-3 rounded-xl text-base ${
+                          className={`group relative p-3 rounded-xl text-gray-800 dark:text-white text-[14px] font-[450] ${
                             msg.role === 'user'
-                              ? 'bg-gray-100 text-black dark:text-white dark:bg-neutral-800 max-w-[80%]'
+                              ? 'bg-gray-100 dark:bg-neutral-800 max-w-[80%]'
                               : 'bg-transparent'
                           }`}
                         >
@@ -176,10 +176,10 @@ export function ChatInterface() {
               </div>
             </ScrollArea.Viewport>
             <ScrollArea.Scrollbar
-              className="flex select-none touch-none p-0.5 bg-muted/10 transition-colors duration-150 ease-out hover:bg-muted/20 data-[orientation=vertical]:w-2 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2"
+              className="flex select-none touch-none p-0.5 bg-gray-100 dark:bg-neutral-800 transition-colors duration-150 ease-out hover:bg-muted/20 data-[orientation=vertical]:w-2 data-[orientation=horizontal]:flex-col data-[orientation=horizontal]:h-2"
               orientation="vertical"
             >
-              <ScrollArea.Thumb className="flex-1 bg-muted-foreground/50 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
+              <ScrollArea.Thumb className="flex-1 bg-gray-50 dark:bg-neutral-800 rounded-[10px] relative before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:-translate-x-1/2 before:-translate-y-1/2 before:w-full before:h-full before:min-w-[44px] before:min-h-[44px]" />
             </ScrollArea.Scrollbar>
           </ScrollArea.Root>
 
