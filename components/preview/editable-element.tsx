@@ -62,19 +62,6 @@ export function EditableElement({
         >
           {content}
         </div>
-        <div className="absolute -top-8 right-0 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button size="sm" variant="secondary" className="h-6 px-2" onClick={handleSave}>
-            <Check className="h-4 w-4" />
-          </Button>
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-6 px-2"
-            onClick={handleCancel}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
     )
   }

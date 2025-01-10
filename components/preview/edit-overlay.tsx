@@ -1,9 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils/tailwind-utils'
+import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
 
 interface EditOverlayProps {
   elementId: string
@@ -26,20 +25,40 @@ export function EditOverlay({
   useEffect(() => {
     if (editRef.current) {
       editRef.current.focus()
+      editRef.current.textContent = initialContent
+      
+      // Place cursor at the end
+      const range = document.createRange()
+      const sel = window.getSelection()
+      range.selectNodeContents(editRef.current)
+      range.collapse(false)
+      sel?.removeAllRanges()
+      sel?.addRange(range)
     }
-  }, [])
+  }, [initialContent])
 
   const handleSave = () => {
     onSave(content)
   }
 
+  const handleCancel = () => {
+    onCancel()
+  }
+
+  // Register keyboard shortcuts
+  useKeyboardShortcut('Enter', handleSave, false)
+  useKeyboardShortcut('Escape', handleCancel, false)
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSave()
-    } else if (e.key === 'Escape') {
-      e.preventDefault()
-      onCancel()
+    }
+  }
+
+  const handleInput = () => {
+    if (editRef.current) {
+      setContent(editRef.current.textContent || '')
     }
   }
 
@@ -61,34 +80,14 @@ export function EditOverlay({
             'min-h-[1em] outline-none border-2 border-blue-500 rounded px-2 py-1',
             'focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
           )}
-          onBlur={(e) => setContent(e.currentTarget.textContent || '')}
+          onInput={handleInput}
           onKeyDown={handleKeyDown}
           suppressContentEditableWarning
         >
-          {content}
+          {initialContent}
         </div>
         <div className="flex justify-end gap-2 text-xs text-neutral-500">
           <span>Press Enter to save, Shift+Enter for new line, Esc to cancel</span>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="h-8"
-            onClick={handleSave}
-          >
-            <Check className="h-4 w-4 mr-1" />
-            Save
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-8"
-            onClick={onCancel}
-          >
-            <X className="h-4 w-4 mr-1" />
-            Cancel
-          </Button>
         </div>
       </div>
     </div>
