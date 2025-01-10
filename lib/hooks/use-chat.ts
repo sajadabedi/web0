@@ -7,8 +7,8 @@ import { v4 as uuidv4 } from 'uuid'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
-import { getMultipleUnsplashImages } from '../utils/unsplash'
 import { makeHtmlEditable, preserveEditableContent } from '../utils/html-parser'
+import { getMultipleUnsplashImages } from '../utils/unsplash'
 
 interface ChatStore {
   messages: Message[]
@@ -239,7 +239,7 @@ async function processImages(html: string) {
   let processedHtml = html
   images.forEach((image, index) => {
     const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full h-full object-cover" loading="lazy" />`
+    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full h-full object-cover max-h-[320px]" loading="lazy" />`
     processedHtml = processedHtml.replace(placeholder, imgHtml)
   })
 
