@@ -12,15 +12,19 @@ import { EXAMPLE_PROMPTS } from '@/lib/system-prompt'
 import { ArrowUp, History, PanelRightClose, PanelRightOpen, Square } from 'lucide-react'
 import { useState } from 'react'
 
-export function ChatInterface() {
-  const [isExpanded, setIsExpanded] = useState(true)
+interface ChatInterfaceProps {
+  isExpanded: boolean
+  onExpandedChange: (expanded: boolean) => void
+}
+
+export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfaceProps) {
   const { messages, sendMessage, isLoading, removeMessagesAfter, stopGeneration } =
     useChatStore()
   const { versions } = useWebsiteVersionStore()
   const { revertToVersion } = usePreviewStore()
   const [inputValue, setInputValue] = useState('')
 
-  useKeyboardShortcut('/', () => setIsExpanded((prev) => !prev))
+  useKeyboardShortcut('/', () => onExpandedChange(!isExpanded))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,7 +66,7 @@ export function ChatInterface() {
           variant="ghost"
           size="icon"
           className="absolute left-2 top-2 group text-black dark:text-white"
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => onExpandedChange(!isExpanded)}
         >
           {isExpanded ? <PanelRightOpen size={18} /> : <PanelRightClose size={18} />}
         </Button>

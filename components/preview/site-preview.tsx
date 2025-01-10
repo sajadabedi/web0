@@ -4,11 +4,21 @@ import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import { useEffect, useRef } from 'react'
 import { Globe } from 'lucide-react'
+import { LoadingToast } from '@/components/preview/loading-toast'
+import { useChatStore } from '@/lib/hooks/use-chat'
 
-export function SitePreview() {
+interface SitePreviewProps {
+  sidebarExpanded?: boolean
+}
+
+export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { html, css } = usePreviewStore()
   const { getCurrentVersion } = useWebsiteVersionStore()
+  const { isLoading, currentHtml } = useChatStore()
+
+  // Only show toast when sidebar is collapsed and there's loading
+  const showToast = !sidebarExpanded && isLoading
 
   useEffect(() => {
     if (!iframeRef.current) return
@@ -79,20 +89,28 @@ export function SitePreview() {
   }, [html, css, getCurrentVersion])
 
   return (
-    <div className="h-full w-full rounded-lg overflow-hidden border bg-white dark:bg-neutral-900 relative dark:border-neutral-800 text-gray-600">
-      {!html && !css ? (
-        <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-muted-foreground dark:text-neutral-500 text-sm">
-          <Globe className="mr-2 h-4 w-4" />
-          Preview will appear here
-        </div>
-      ) : (
-        <iframe
-          ref={iframeRef}
-          className="w-full h-full"
-          title="Website Preview"
-          sandbox="allow-same-origin allow-scripts"
-        />
-      )}
+    <div className="relative w-full h-full">
+      <LoadingToast
+        isLoading={showToast}
+        message={
+          currentHtml ? 'Making changes to your website...' : 'Creating your website...'
+        }
+      />
+      <div className="h-full w-full rounded-lg overflow-hidden border bg-white dark:bg-neutral-900 relative dark:border-neutral-800 text-gray-600">
+        {!html && !css ? (
+          <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-muted-foreground dark:text-neutral-500 text-sm">
+            <Globe className="mr-2 h-4 w-4" />
+            Preview will appear here
+          </div>
+        ) : (
+          <iframe
+            ref={iframeRef}
+            className="w-full h-full"
+            title="Website Preview"
+            sandbox="allow-same-origin allow-scripts"
+          />
+        )}
+      </div>
     </div>
   )
 }
