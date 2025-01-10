@@ -1,7 +1,7 @@
 'use client'
 
+import { LoadingDots } from '@/components/ui/loading-dots'
 import { Toast } from '@/components/ui/toast'
-import { LoadingDots } from '../ui/loading-dots'
 
 interface LoadingToastProps {
   isLoading: boolean

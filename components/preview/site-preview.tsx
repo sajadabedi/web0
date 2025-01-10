@@ -94,7 +94,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
         isLoading={showToast}
         message={currentHtml ? 'Making changes...' : 'Creating your website...'}
       />
-      <div className="h-full w-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900 relative text-gray-600 shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),0_1px_4px_rgba(0,0,0,0.1)]">
+      <div className="h-full w-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900 relative  text-gray-600 shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),0_1px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_1px_4px_rgba(255,255,255,0.1)]">
         {!html && !css ? (
           <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-muted-foreground dark:text-neutral-500 text-sm">
             <Globe className="mr-2 h-4 w-4" />
