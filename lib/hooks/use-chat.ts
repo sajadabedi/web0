@@ -8,6 +8,7 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 import { getMultipleUnsplashImages } from '../utils/unsplash'
+import { makeHtmlEditable, preserveEditableContent } from '../utils/html-parser'
 
 interface ChatStore {
   messages: Message[]
@@ -70,13 +71,40 @@ export const useChatStore = create<ChatStore>()(
         set({ isLoading: true, error: null })
         set((state) => ({ messages: [...state.messages, newMessage] }))
 
-        // Prepare context for OpenAI
-        const { currentHtml, currentCss } = get()
-        const contextMessage = currentHtml
+        // Get current state from preview store
+        const previewStore = usePreviewStore.getState()
+        const { html, css, editableElements } = previewStore
+
+        // Format editable elements for context
+        const editableContext = Object.entries(editableElements)
+          .map(([id, content]) => `data-editable-id="${id}": "${content}"`)
+          .join('\n')
+
+        // Create context message
+        const contextMessage = html
           ? [
               {
                 role: 'system' as const,
-                content: `Current website state:\n\nHTML:\n${currentHtml}\n\nCSS:\n${currentCss}\n\nPlease modify the above website based on the user's request. Only create a new website if explicitly asked.`,
+                content: `Current website state:
+
+HTML:
+${html}
+
+CSS:
+${css}
+
+IMPORTANT - Manual Edits:
+The following elements have been manually edited and MUST be preserved exactly as shown:
+${editableContext}
+
+Instructions:
+1. Use the current HTML as your base
+2. Apply ONLY the requested changes
+3. DO NOT modify any elements that have data-editable-id attributes
+4. Preserve all data-editable-id attributes and their content exactly as shown above
+5. Make your changes around the manual edits, treating them as fixed points
+6. If you need to add content near manual edits, do so carefully without disturbing them
+7. Return the complete HTML with your changes while keeping manual edits intact`,
               },
             ]
           : []
@@ -88,9 +116,7 @@ export const useChatStore = create<ChatStore>()(
             {
               id: uuidv4(),
               role: 'assistant',
-              content: currentHtml
-                ? 'Modifying your website...'
-                : 'Creating your website...',
+              content: html ? 'Modifying your website...' : 'Creating your website...',
               timestamp: new Date(),
             },
           ],
@@ -126,11 +152,16 @@ export const useChatStore = create<ChatStore>()(
           // Process response and update website
           const parsedResponse = await parseOpenAIResponse(fullMessage)
 
+          // Make HTML editable and preserve manual edits
+          const editableHtml = makeHtmlEditable(parsedResponse.html)
+          const finalHtml = preserveEditableContent(editableHtml, editableElements)
+
+          // Add new version
           const versionStore = useWebsiteVersionStore.getState()
           versionStore.addVersion({
             messageId,
             timestamp: Date.now(),
-            html: parsedResponse.html,
+            html: finalHtml,
             css: parsedResponse.css || '',
             changes: {
               type: versionStore.versions.length === 0 ? 'initial' : 'update',
@@ -138,9 +169,8 @@ export const useChatStore = create<ChatStore>()(
             },
           })
 
-          usePreviewStore
-            .getState()
-            .updatePreview(parsedResponse.html, parsedResponse.css || '')
+          // Update preview
+          previewStore.updatePreview(finalHtml, parsedResponse.css || '')
 
           // Update chat with response
           set((state) => ({
@@ -153,7 +183,7 @@ export const useChatStore = create<ChatStore>()(
                 timestamp: new Date(),
               },
             ],
-            currentHtml: parsedResponse.html,
+            currentHtml: finalHtml,
             currentCss: parsedResponse.css || '',
             isLoading: false,
           }))

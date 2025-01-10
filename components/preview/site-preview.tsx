@@ -51,11 +51,13 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
 
     // Make HTML editable and extract content
     const editableHtml = makeHtmlEditable(finalHtml)
-    const editableContent = extractEditableContent(finalHtml)
+    const editableContent = extractEditableContent(editableHtml)
 
-    // Update store with editable content
+    // Update store with editable content (only for new elements)
     Object.entries(editableContent).forEach(([id, content]) => {
-      handleUpdateElement(id, content)
+      if (!usePreviewStore.getState().editableElements[id]) {
+        handleUpdateElement(id, content)
+      }
     })
 
     // Create a clean document with sandboxed scripts

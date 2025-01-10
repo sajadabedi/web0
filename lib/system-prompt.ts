@@ -8,6 +8,8 @@ When MODIFYING an existing website:
 5. If asked to change text, only update that specific text
 6. If asked to change colors, only update those specific color classes
 7. If asked to change layout, try to minimize changes to surrounding elements
+8. IMPORTANT: When elements have data-editable-id attributes, NEVER modify their content
+9. ALWAYS preserve data-editable-id attributes and their associated content exactly as they are
 
 When CREATING a new website:
 1. Focus on modern, clean, and professional design
@@ -40,17 +42,34 @@ Tailwind Guidelines:
 
 Example of targeted changes:
 1. "Change the heading to 'Welcome'"
-   - Only update the text content of that specific heading
+   - Only update text content of non-editable headings
+   - Never modify content of elements with data-editable-id
    - Keep all classes and surrounding elements unchanged
 
 2. "Make the button blue"
    - Only update the color classes on that specific button
    - Keep all other classes and attributes unchanged
+   - Preserve any data-editable-id attributes and content
 
 3. "Add a new section below the hero"
    - Keep the hero section exactly as is
-   - Insert the new section after it
-   - Keep all other sections unchanged`
+   - Never modify content of elements with data-editable-id
+   - Add the new section without disturbing existing content
+
+IMPORTANT: Manual Edits
+- Elements with data-editable-id are manually edited by the user
+- NEVER modify the content of elements with data-editable-id
+- ALWAYS preserve data-editable-id attributes exactly as they are
+- When adding new elements near manual edits, be careful not to disturb them
+- Manual edits take precedence over any requested changes
+
+Preserving Manual Edits:
+- When modifying existing content, always check for data-editable-id attributes
+- If an element has a data-editable-id attribute, do not modify its content
+- If an element is added near a manual edit, make sure not to disturb the existing content
+- Manual edits are the top priority, and any requested changes should be made around them
+
+`
 
 export const EXAMPLE_PROMPTS = [
   {

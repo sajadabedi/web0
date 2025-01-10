@@ -20,7 +20,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfaceProps) {
   const { messages, sendMessage, isLoading, removeMessagesAfter, stopGeneration } =
     useChatStore()
-  const { versions } = useWebsiteVersionStore()
+  const { versions, getLatestNonManualVersion } = useWebsiteVersionStore()
   const { revertToVersion } = usePreviewStore()
   const [inputValue, setInputValue] = useState('')
 
@@ -30,6 +30,13 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
     e.preventDefault()
     if (!inputValue.trim() || isLoading) return
 
+    // Get the latest non-manual version before applying new changes
+    const { version: baseVersion } = getLatestNonManualVersion()
+    if (baseVersion) {
+      // Remove all messages after this version to maintain consistency
+      removeMessagesAfter(baseVersion.messageId)
+    }
+
     setInputValue('')
     await sendMessage(inputValue)
   }
@@ -38,8 +45,16 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
     stopGeneration()
   }
 
-  const handleExampleClick = async (prompt: string) => {
+  const handleExampleClick = async ({ label, prompt }: { label: string; prompt: string }) => {
     if (isLoading) return
+
+    // Get the latest non-manual version before applying new changes
+    const { version: baseVersion } = getLatestNonManualVersion()
+    if (baseVersion) {
+      // Remove all messages after this version to maintain consistency
+      removeMessagesAfter(baseVersion.messageId)
+    }
+
     setInputValue('')
     try {
       await sendMessage(prompt)
@@ -51,16 +66,15 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
   const handleRevertToVersion = async (messageId: string) => {
     const version = versions.find((v) => v.messageId === messageId)
     if (!version) return
-    revertToVersion(version.id)
+
     removeMessagesAfter(messageId)
+    revertToVersion(version.id)
   }
 
   return (
-    <div
-      className={`relative border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
-        isExpanded ? 'w-[400px]' : 'w-[50px]'
-      }`}
-    >
+    <div className={`relative border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
+      isExpanded ? 'w-[400px]' : 'w-[50px]'
+    }`}>
       <Tooltip side="right" content={`${isExpanded ? 'Collapse' : 'Expand'} (⌘+\\)`}>
         <Button
           variant="ghost"
@@ -85,7 +99,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
                     {EXAMPLE_PROMPTS.map(({ label, prompt }) => (
                       <button
                         key={label}
-                        onClick={() => handleExampleClick(prompt)}
+                        onClick={() => handleExampleClick({ label, prompt })}
                         className="px-3 py-1 text-gray-600 dark:text-neutral-400 text-sm bg-gray-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
                         disabled={isLoading}
                       >

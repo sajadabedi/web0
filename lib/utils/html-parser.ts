@@ -23,6 +23,12 @@ export function makeHtmlEditable(htmlContent: string): string {
 
   function processNode(node: HTMLElement) {
     if (node.nodeType === 1) { // Element node
+      // First check if node already has a data-editable-id
+      const existingId = node.getAttribute('data-editable-id')
+      if (existingId) {
+        return // Skip if already has an ID
+      }
+
       const isEditable = EDITABLE_ELEMENTS.some(config => {
         if (node.tagName.toLowerCase() === config.tagName.toLowerCase()) {
           if (config.className) {
@@ -58,13 +64,13 @@ export function makeHtmlEditable(htmlContent: string): string {
 
 export function extractEditableContent(html: string): Record<string, string> {
   const root = parse(html)
-  const editableContent: Record<string, string> = {}
+  const content: Record<string, string> = {}
 
   function processNode(node: HTMLElement) {
     if (node.nodeType === 1) { // Element node
       const editableId = node.getAttribute('data-editable-id')
       if (editableId) {
-        editableContent[editableId] = node.text
+        content[editableId] = node.textContent.trim()
       }
 
       // Process children
@@ -82,5 +88,33 @@ export function extractEditableContent(html: string): Record<string, string> {
     }
   })
 
-  return editableContent
+  return content
+}
+
+export function preserveEditableContent(html: string, editableElements: Record<string, string>): string {
+  const root = parse(html)
+
+  function processNode(node: HTMLElement) {
+    if (node.nodeType === 1) { // Element node
+      const editableId = node.getAttribute('data-editable-id')
+      if (editableId && editableElements[editableId]) {
+        node.textContent = editableElements[editableId]
+      }
+
+      // Process children
+      node.childNodes.forEach(child => {
+        if (child instanceof HTMLElement) {
+          processNode(child)
+        }
+      })
+    }
+  }
+
+  root.childNodes.forEach(node => {
+    if (node instanceof HTMLElement) {
+      processNode(node)
+    }
+  })
+
+  return root.toString()
 }
