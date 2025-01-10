@@ -7,6 +7,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { Command } from 'cmdk'
 import { ArrowUp } from 'lucide-react'
 import { useState } from 'react'
+import { Tooltip } from '@/components/ui/tooltip'
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
@@ -44,9 +45,11 @@ export function CommandPalette() {
                 className="flex col-start-1 col-end-1 row-start-1 row-end-1 h-14 w-full caret-pink-500 text-black dark:text-white rounded-lg border-0 bg-transparent px-4 outline-none placeholder:text-neutral-500 focus:ring-0 dark:placeholder:text-neutral-400"
               />
               {inputValue.trim() && (
-                <div className="h-5 w-5 col-start-1 col-end-1 row-start-1 row-end-1 flex items-center justify-center rounded-full bg-black dark:bg-white justify-self-end mr-2">
-                  <ArrowUp className="h-3 w-3 text-white dark:text-black" />
-                </div>
+                <Tooltip content="Send message">
+                  <div className="h-5 w-5 col-start-1 col-end-1 row-start-1 row-end-1 flex items-center justify-center rounded-full bg-black dark:bg-white justify-self-end mr-2">
+                    <ArrowUp className="h-3 w-3 text-white dark:text-black" />
+                  </div>
+                </Tooltip>
               )}
             </div>
             {!currentHtml && (
