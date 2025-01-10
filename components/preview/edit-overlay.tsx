@@ -48,9 +48,16 @@ export function EditOverlay({
     }
   }
 
+  const handleBlur = (e: React.FocusEvent) => {
+    // Check if the new focus target is outside our input
+    if (!editRef.current?.contains(e.relatedTarget as Node)) {
+      onCancel()
+    }
+  }
+
   return (
     <div
-      className="fixed z-50 bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-2"
+      className="fixed z-50 bg-white dark:bg-neutral-800 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_2px_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_2px_8px_rgba(255,255,255,0.1)] caret-pink-500 rounded-lg p-2"
       style={{
         top: position.y,
         left: position.x,
@@ -68,6 +75,7 @@ export function EditOverlay({
             )}
             onInput={(e) => setContent(e.currentTarget.textContent || '')}
             onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
             suppressContentEditableWarning
           >
             {initialContent}

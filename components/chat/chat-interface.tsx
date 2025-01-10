@@ -24,7 +24,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
   const { revertToVersion } = usePreviewStore()
   const [inputValue, setInputValue] = useState('')
 
-  useKeyboardShortcut('/', () => onExpandedChange(!isExpanded))
+  useKeyboardShortcut('\\', () => onExpandedChange(!isExpanded))
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -61,7 +61,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
         isExpanded ? 'w-[400px]' : 'w-[50px]'
       }`}
     >
-      <Tooltip side="right" content={`${isExpanded ? 'Collapse' : 'Expand'} (⌘+/)`}>
+      <Tooltip side="right" content={`${isExpanded ? 'Collapse' : 'Expand'} (⌘+\\)`}>
         <Button
           variant="ghost"
           size="icon"
@@ -154,10 +154,10 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
                     disabled={!inputValue.trim() && !isLoading}
                   >
                     {isLoading ? (
-                      <Square className="h-4 w-4 fill-current" />
+                      <Square className="h-4 w-4 fill-red-500" />
                     ) : (
-                      <div className="h-5 w-5 group-disabled:opacity-0 flex items-center justify-center rounded-full bg-black dark:bg-white">
-                        <ArrowUp className="h-3 w-3 text-white dark:text-black" />
+                      <div className="h-5 w-5 group-disabled:opacity-0 flex items-center justify-center rounded-full bg-[var(--accent-color)]">
+                        <ArrowUp className="h-3 w-3 text-black" />
                       </div>
                     )}
                   </Button>

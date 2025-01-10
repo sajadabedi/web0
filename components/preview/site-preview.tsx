@@ -134,7 +134,6 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     doc.close()
   }, [html, css, getCurrentVersion, handleUpdateElement])
 
-  // Handle messages from iframe
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'startEditing') {
@@ -165,6 +164,27 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
   }, [])
+
+  // Add scroll handler to close edit overlay
+  useEffect(() => {
+    if (!editingState) return
+
+    const doc = iframeRef.current?.contentDocument
+    if (!doc) return
+
+    const handleScroll = () => {
+      setEditingState(null)
+    }
+
+    // Listen for scroll in both iframe and window
+    doc.addEventListener('scroll', handleScroll, { passive: true })
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    
+    return () => {
+      doc.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [editingState])
 
   const handleSave = useCallback(
     (content: string) => {
