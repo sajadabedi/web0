@@ -19,18 +19,21 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   const { getCurrentVersion } = useWebsiteVersionStore()
   const { isLoading, currentHtml } = useChatStore()
   const [editingState, setEditingState] = useState<{
-    id: string;
-    content: string;
-    position: { x: number; y: number };
+    id: string
+    content: string
+    position: { x: number; y: number }
   } | null>(null)
 
   // Only show toast when sidebar is collapsed and there's loading
   const showToast = !sidebarExpanded && isLoading
 
   // Memoize the update function to keep it stable
-  const handleUpdateElement = useCallback((id: string, content: string) => {
-    updateElement(id, content)
-  }, [updateElement])
+  const handleUpdateElement = useCallback(
+    (id: string, content: string) => {
+      updateElement(id, content)
+    },
+    [updateElement]
+  )
 
   useEffect(() => {
     if (!iframeRef.current) return
@@ -79,11 +82,10 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
 
             [data-editable-id] {
               cursor: pointer;
-              transition: outline 0.2s ease;
             }
 
             [data-editable-id]:hover {
-              outline: 2px dashed rgba(59, 130, 246, 0.5);
+              outline: 1px dashed #FF8FE7;
               outline-offset: 2px;
             }
 
@@ -112,7 +114,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
               document.head.appendChild(tailwindScript);
 
               // Add click handlers for editable elements
-              document.addEventListener('dblclick', (e) => {
+              document.addEventListener('click', (e) => {
                 const editableElement = e.target.closest('[data-editable-id]');
                 if (editableElement) {
                   const id = editableElement.getAttribute('data-editable-id');
@@ -136,8 +138,8 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'startEditing') {
-        const { id, content } = event.data;
-        
+        const { id, content } = event.data
+
         // Get the position of the element in the iframe
         const doc = iframeRef.current?.contentDocument
         if (!doc) return
@@ -147,13 +149,13 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
 
         const rect = element.getBoundingClientRect()
         const iframeRect = iframeRef.current?.getBoundingClientRect()
-        
+
         if (!iframeRect) return
 
         // Calculate position relative to the main window
         const position = {
           x: iframeRect.left + rect.left,
-          y: iframeRect.top + rect.top
+          y: iframeRect.top + rect.top,
         }
 
         setEditingState({ id, content, position })
@@ -164,22 +166,25 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     return () => window.removeEventListener('message', handleMessage)
   }, [])
 
-  const handleSave = useCallback((content: string) => {
-    if (!editingState) return
+  const handleSave = useCallback(
+    (content: string) => {
+      if (!editingState) return
 
-    // Update the content in the store
-    updateElement(editingState.id, content)
+      // Update the content in the store
+      updateElement(editingState.id, content)
 
-    // Update the content in the iframe
-    const doc = iframeRef.current?.contentDocument
-    if (!doc) return
+      // Update the content in the iframe
+      const doc = iframeRef.current?.contentDocument
+      if (!doc) return
 
-    const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`)
-    if (!element) return
+      const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`)
+      if (!element) return
 
-    element.textContent = content
-    setEditingState(null)
-  }, [editingState, updateElement])
+      element.textContent = content
+      setEditingState(null)
+    },
+    [editingState, updateElement]
+  )
 
   return (
     <div className="relative w-full h-full p-2">

@@ -1,11 +1,10 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { cn } from '@/lib/utils/tailwind-utils'
-import { Check, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
 import type { JSX as JSXNS } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
 
 interface EditableElementProps {
   elementId: string
@@ -45,6 +44,17 @@ export function EditableElement({
     setIsEditing(false)
   }
 
+  // Register keyboard shortcuts when editing
+  useKeyboardShortcut('Enter', handleSave, false)
+  useKeyboardShortcut('Escape', handleCancel, false)
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSave()
+    }
+  }
+
   const Tag = tag as any
 
   if (isEditing) {
@@ -54,10 +64,11 @@ export function EditableElement({
           ref={editRef}
           contentEditable
           className={cn(
-            'min-h-[1em] outline-none border-2 border-blue-500 rounded px-2 py-1',
+            'min-h-[1em] outline-none border-2 border-red-500 rounded px-2 py-1',
             className
           )}
-          onBlur={(e) => setContent(e.currentTarget.textContent || '')}
+          onInput={(e) => setContent(e.currentTarget.textContent || '')}
+          onKeyDown={handleKeyDown}
           suppressContentEditableWarning
         >
           {content}
@@ -69,7 +80,7 @@ export function EditableElement({
   return (
     <Tag
       className={cn(
-        'cursor-pointer hover:outline-dashed hover:outline-blue-500',
+        'cursor-pointer outline-1 outline-transparent hover:outline-red-500',
         className
       )}
       onDoubleClick={handleDoubleClick}

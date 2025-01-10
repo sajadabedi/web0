@@ -26,7 +26,7 @@ export function EditOverlay({
     if (editRef.current) {
       editRef.current.focus()
       editRef.current.textContent = initialContent
-      
+
       // Place cursor at the end
       const range = document.createRange()
       const sel = window.getSelection()
@@ -37,57 +37,41 @@ export function EditOverlay({
     }
   }, [initialContent])
 
-  const handleSave = () => {
-    onSave(content)
-  }
-
-  const handleCancel = () => {
-    onCancel()
-  }
-
   // Register keyboard shortcuts
-  useKeyboardShortcut('Enter', handleSave, false)
-  useKeyboardShortcut('Escape', handleCancel, false)
+  useKeyboardShortcut('Enter', () => onSave(content), false)
+  useKeyboardShortcut('Escape', onCancel, false)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSave()
-    }
-  }
-
-  const handleInput = () => {
-    if (editRef.current) {
-      setContent(editRef.current.textContent || '')
+      onSave(content)
     }
   }
 
   return (
     <div
-      className="fixed z-50 bg-white dark:bg-neutral-900 shadow-lg rounded-lg border border-neutral-200 dark:border-neutral-800 p-4"
+      className="fixed z-50 bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-2"
       style={{
         top: position.y,
         left: position.x,
-        minWidth: '200px',
+        minWidth: '240px',
         maxWidth: '400px',
       }}
     >
-      <div className="flex flex-col gap-4">
-        <div
-          ref={editRef}
-          contentEditable
-          className={cn(
-            'min-h-[1em] outline-none border-2 border-blue-500 rounded px-2 py-1',
-            'focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-          )}
-          onInput={handleInput}
-          onKeyDown={handleKeyDown}
-          suppressContentEditableWarning
-        >
-          {initialContent}
-        </div>
-        <div className="flex justify-end gap-2 text-xs text-neutral-500">
-          <span>Press Enter to save, Shift+Enter for new line, Esc to cancel</span>
+      <div className="flex flex-col gap-4 relative">
+        <div className="relative">
+          <div
+            ref={editRef}
+            contentEditable
+            className={cn(
+              'min-h-[1em] outline-none rounded px-2 py-1 text-black dark:text-white'
+            )}
+            onInput={(e) => setContent(e.currentTarget.textContent || '')}
+            onKeyDown={handleKeyDown}
+            suppressContentEditableWarning
+          >
+            {initialContent}
+          </div>
         </div>
       </div>
     </div>
