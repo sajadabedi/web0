@@ -1,11 +1,11 @@
 'use client'
 
-import { usePreviewStore } from '@/lib/stores/use-preview-store'
-import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
-import { useEffect, useRef } from 'react'
-import { Globe } from 'lucide-react'
 import { LoadingToast } from '@/components/preview/loading-toast'
 import { useChatStore } from '@/lib/hooks/use-chat'
+import { usePreviewStore } from '@/lib/stores/use-preview-store'
+import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
+import { Globe } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 interface SitePreviewProps {
   sidebarExpanded?: boolean
@@ -92,9 +92,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     <div className="relative w-full h-full">
       <LoadingToast
         isLoading={showToast}
-        message={
-          currentHtml ? 'Making changes to your website...' : 'Creating your website...'
-        }
+        message={currentHtml ? 'Making changes...' : 'Creating your website...'}
       />
       <div className="h-full w-full rounded-lg overflow-hidden border bg-white dark:bg-neutral-900 relative dark:border-neutral-800 text-gray-600">
         {!html && !css ? (

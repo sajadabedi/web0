@@ -13,11 +13,9 @@ export function LoadingToast({ isLoading, message }: LoadingToastProps) {
     <Toast open={isLoading}>
       <div className="flex items-center gap-2">
         <div className="flex h-5 w-5 items-center justify-center">
-          <LoadingDots />
+          <LoadingDots className="bg-white" />
         </div>
-        <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-          {message}
-        </p>
+        <p className="text-sm font-medium text-white">{message}</p>
       </div>
     </Toast>
   )
