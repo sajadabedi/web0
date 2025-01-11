@@ -4,14 +4,12 @@ import { eq } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
-  request: NextRequest,
-  context: { params: { id: string } }
-) {
-  if (!context.params?.id) {
+  req: NextRequest,
+): Promise<NextResponse> {
+  const id = req.nextUrl.pathname.split('/').pop()
+  if (!id) {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 })
   }
-
-  const id = context.params.id
 
   const sites = await db
     .select()
