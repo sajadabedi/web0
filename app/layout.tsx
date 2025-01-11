@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { CommandPalette } from '@/components/command-palette'
+import { Toaster } from 'sonner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -15,18 +16,19 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: 'G0 Builder',
-  description: 'Build your perfect G0 website with AI',
+  description: 'Build your website with AI',
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <Toaster position="bottom-right" />
         <CommandPalette />
       </body>
     </html>

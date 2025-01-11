@@ -6,8 +6,10 @@ import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
-import { Globe } from 'lucide-react'
+import { Globe, Share2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 interface SitePreviewProps {
   sidebarExpanded?: boolean
@@ -17,13 +19,15 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const { html, css, theme, updateElement } = usePreviewStore()
   const { getCurrentVersion } = useWebsiteVersionStore()
-  const { isLoading, currentHtml } = useChatStore()
+  const { isLoading, currentHtml, currentCss } = useChatStore()
   const [editingState, setEditingState] = useState<{
     id: string
     content: string
     position: { x: number; y: number }
     styles: { fontSize: string; color: string }
   } | null>(null)
+  const [isPublishing, setIsPublishing] = useState(false)
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null)
 
   // Only show toast when sidebar is collapsed and there's loading
   const showToast = !sidebarExpanded && isLoading
@@ -94,17 +98,13 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
           cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/)
         )
 
-        // Find color class - exclude font size classes and other text-related classes
+        // Find color class
         const color = classList.find(
           (cls) =>
             cls.startsWith('text-') &&
             !cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/) &&
             !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
         )
-
-        // Get current element from store to merge with any existing styles
-        const currentElement = usePreviewStore.getState().editableElements[id]
-        const currentStyles = currentElement?.styles || {}
 
         setEditingState({
           id,
@@ -114,17 +114,71 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
             y: rect.top + iframeRect.top,
           },
           styles: {
-            fontSize: fontSize || currentStyles.fontSize || 'text-base',
-            color: color || currentStyles.color || '',
+            fontSize: fontSize || 'text-base',
+            color: color || '',
           },
         })
       }
     }
 
-    // Use event delegation on document body
     doc.body.addEventListener('click', handleClick)
     return () => doc.body.removeEventListener('click', handleClick)
   }, [html, css, theme])
+
+  const handlePublish = async () => {
+    const { html, css } = usePreviewStore.getState()
+    const { currentHtml, currentCss } = useChatStore.getState()
+    
+    const rawHtml = html || currentHtml
+    if (!rawHtml?.trim()) {
+      console.warn('No HTML content to publish')
+      toast.error('No content to publish')
+      return
+    }
+
+    // Create a clean HTML structure
+    const contentToPublish = {
+      html: rawHtml.trim(),
+      css: (css || currentCss || '').trim()
+    }
+
+    try {
+      setIsPublishing(true)
+      
+      const response = await fetch('/api/publish', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(contentToPublish),
+      })
+
+      const responseData = await response.json()
+
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to publish')
+      }
+
+      const { id } = responseData
+      const url = `${window.location.origin}/preview/${id}`
+      setPublishedUrl(url)
+      
+      // Copy URL to clipboard
+      await navigator.clipboard.writeText(url)
+      
+      toast.success('Published! URL copied to clipboard', {
+        action: {
+          label: 'Open',
+          onClick: () => window.open(url, '_blank'),
+        },
+      })
+    } catch (error) {
+      console.error('Failed to publish:', error)
+      toast.error(error instanceof Error ? error.message : 'Failed to publish')
+    } finally {
+      setIsPublishing(false)
+    }
+  }
 
   const handleSave = useCallback(
     (content: string, styles: { color: string; fontSize: string }) => {
@@ -149,7 +203,15 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     <div className="relative w-full h-screen p-2">
       <div className="flex items-center justify-between mb-2">
         <ThemeToggle />
-        <button>Publish</button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handlePublish}
+          disabled={isPublishing || !html}
+        >
+          <Share2 className="mr-2 h-4 w-4" />
+          {isPublishing ? 'Publishing...' : 'Publish'}
+        </Button>
       </div>
       <LoadingToast
         isLoading={showToast}
