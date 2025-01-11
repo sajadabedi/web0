@@ -3,7 +3,7 @@ import { publishedSites } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
-interface PreviewParams {
+type Props = {
   params: {
     id: string
   }
@@ -11,13 +11,13 @@ interface PreviewParams {
 
 export async function GET(
   request: NextRequest,
-  { params }: PreviewParams
+  props: Props
 ) {
-  if (!params?.id) {
+  if (!props.params?.id) {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 })
   }
 
-  const id = params.id
+  const id = props.params.id
 
   const sites = await db
     .select()
