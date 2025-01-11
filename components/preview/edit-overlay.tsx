@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils/tailwind-utils'
 import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { ChevronDown, Type } from 'lucide-react'
+import { Type } from 'lucide-react'
+import { Dropdown } from '@/components/ui/dropdown'
 
 interface EditOverlayProps {
   elementId: string
@@ -62,27 +62,25 @@ export function EditOverlay({
     color: initialStyles?.color || '',
     fontSize: initialStyles?.fontSize || 'text-base',
   })
-  const [colorOpen, setColorOpen] = useState(false)
-  const [sizeOpen, setSizeOpen] = useState(false)
 
   // Initialize content when component mounts
   useEffect(() => {
     if (editRef.current) {
-      const div = editRef.current as HTMLDivElement
-      div.innerText = initialContent
-      div.focus()
+      editRef.current.innerText = initialContent
+      editRef.current.focus()
     }
   }, [initialContent])
 
-  // Get current font size label
-  const getCurrentFontSize = () => {
-    const size = fontSizes.find(s => s.value === styles.fontSize)
-    console.log('Current font size:', { size, fontSize: styles.fontSize }) // Debug log
-    return size ? size.label : 'Normal'
-  }
+  const handleSave = useCallback(() => {
+    const currentContent = editRef.current?.innerText || content
+    onSave(currentContent, {
+      color: styles.color || '',
+      fontSize: styles.fontSize || 'text-base'
+    })
+  }, [content, styles, onSave])
 
   // Register keyboard shortcuts
-  useKeyboardShortcut('Enter', () => handleSave(), false)
+  useKeyboardShortcut('Enter', handleSave, false)
   useKeyboardShortcut('Escape', onCancel, false)
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -103,21 +101,26 @@ export function EditOverlay({
     }
   }
 
-  const handleSave = useCallback(
-    () => {
-      const currentContent = editRef.current?.innerText || content
-      onSave(currentContent, {
-        color: styles.color || '',
-        fontSize: styles.fontSize || 'text-base'
-      })
-    },
-    [content, styles, onSave]
-  )
+  const colorOptions = colors.map(color => ({
+    label: color.label,
+    value: color.value,
+    preview: (
+      <div className={cn(
+        'w-4 h-4 rounded-full bg-current shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]', 
+        color.value || 'bg-black dark:bg-white'
+      )} />
+    )
+  }))
+
+  const fontSizeOptions = fontSizes.map(size => ({
+    label: size.label,
+    value: size.value
+  }))
 
   return (
     <div
       ref={overlayRef}
-      className="edit-overlay-container fixed z-50 bg-white dark:bg-neutral-800 shadow-[0_0_0_1px_rgba(0,0,0,0.05),0_2px_8px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_2px_8px_rgba(255,255,255,0.1)] caret-pink-500 rounded-lg p-4"
+      className="edit-overlay-container fixed z-50 bg-white dark:bg-neutral-800 shadow-lg rounded-lg p-4"
       style={{
         top: position.y,
         left: position.x,
@@ -131,7 +134,7 @@ export function EditOverlay({
           <div
             ref={editRef}
             contentEditable
-            className="min-h-[1em] outline-none rounded px-3 py-2 text-black dark:text-white border border-input"
+            className="min-h-[1em] outline-none rounded px-3 py-2 border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
             onInput={(e) => setContent(e.currentTarget.innerText)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
@@ -142,86 +145,30 @@ export function EditOverlay({
         {/* Style Controls */}
         <div className="flex gap-2 items-center">
           {/* Font Color */}
-          <DropdownMenu.Root open={colorOpen} onOpenChange={setColorOpen}>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
-                <div className={cn('w-4 h-4 rounded-full bg-current', styles.color || 'bg-black dark:bg-white')} />
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenu.Trigger>
-
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="min-w-[220px] bg-white rounded-md shadow-lg p-1 z-50 dark:bg-neutral-800"
-                sideOffset={5}
-                align="start"
-              >
-                {colors.map((color) => (
-                  <DropdownMenu.Item
-                    key={color.value}
-                    className={cn(
-                      'relative flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 outline-none cursor-default',
-                      'hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-sm'
-                    )}
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setStyles({ ...styles, color: color.value })
-                      setColorOpen(false)
-                    }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={cn('w-4 h-4 rounded-full bg-current', color.value || 'bg-black dark:bg-white')} />
-                      <span className={cn('flex-1', color.value)}>{color.label}</span>
-                    </div>
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <Dropdown
+            value={styles.color}
+            options={colorOptions}
+            onChange={(value) => setStyles({ ...styles, color: value })}
+            className="w-[100px]"
+          />
 
           {/* Font Size */}
-          <DropdownMenu.Root open={sizeOpen} onOpenChange={setSizeOpen}>
-            <DropdownMenu.Trigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 min-w-[100px] justify-between">
-                <div className="flex items-center gap-2">
-                  <Type className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{getCurrentFontSize()}</span>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-700 dark:text-gray-300" />
-              </Button>
-            </DropdownMenu.Trigger>
-
-            <DropdownMenu.Portal>
-              <DropdownMenu.Content
-                className="min-w-[180px] bg-white rounded-md shadow-lg p-1 z-50 dark:bg-neutral-800"
-                sideOffset={5}
-                align="start"
-              >
-                {fontSizes.map((size) => (
-                  <DropdownMenu.Item
-                    key={size.value}
-                    className={cn(
-                      'relative flex items-center px-2 py-2 text-sm text-gray-700 dark:text-gray-300 outline-none cursor-default',
-                      'hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-sm',
-                      styles.fontSize === size.value && 'bg-gray-100 dark:bg-neutral-700'
-                    )}
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setStyles({ ...styles, fontSize: size.value })
-                      setSizeOpen(false)
-                    }}
-                  >
-                    {size.label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.Content>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Root>
+          <Dropdown
+            value={styles.fontSize}
+            options={fontSizeOptions}
+            onChange={(value) => setStyles({ ...styles, fontSize: value })}
+            triggerIcon={<Type className="h-4 w-4 text-gray-700 dark:text-gray-300" />}
+            className="w-[120px]"
+          />
 
           <div className="flex-1" />
 
           {/* Save Button */}
-          <Button onClick={handleSave} size="sm" className="bg-pink-500 hover:bg-pink-600">
+          <Button 
+            onClick={handleSave} 
+            size="sm" 
+            className="bg-pink-500 hover:bg-pink-600 text-white"
+          >
             Save
           </Button>
         </div>

@@ -45,7 +45,13 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
     stopGeneration()
   }
 
-  const handleExampleClick = async ({ label, prompt }: { label: string; prompt: string }) => {
+  const handleExampleClick = async ({
+    label,
+    prompt,
+  }: {
+    label: string
+    prompt: string
+  }) => {
     if (isLoading) return
 
     // Get the latest non-manual version before applying new changes
@@ -72,9 +78,11 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
   }
 
   return (
-    <div className={`relative border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
-      isExpanded ? 'w-[400px]' : 'w-[50px]'
-    }`}>
+    <div
+      className={`relative border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
+        isExpanded ? 'w-[400px]' : 'w-[50px]'
+      }`}
+    >
       <Tooltip side="right" content={`${isExpanded ? 'Collapse' : 'Expand'} (⌘+\\)`}>
         <Button
           variant="ghost"
@@ -154,7 +162,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
                 <input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Describe your website..."
+                  placeholder="Describe your ask..."
                   className="w-full px-3 font-[450] py-2 text-sm rounded-md bg-transparent caret-pink-500 text-black dark:text-white focus:outline-none"
                   disabled={isLoading}
                 />
