@@ -2,8 +2,6 @@
 
 Build your website layout through natural conversations with AI! G0 Builder combines the power of AI with an intuitive visual editor to make website creation easy.
 
-![G0 Builder Preview](link-to-preview-image)
-
 ## Key Features
 
 - 💬 **AI Chat Interface** - Have natural conversations with AI to build and modify your website
