@@ -176,7 +176,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
                     disabled={!inputValue.trim() && !isLoading}
                   >
                     {isLoading ? (
-                      <Square className="h-4 w-4 fill-red-500" />
+                      <Square className="h-4 w-4 fill-red-500 text-red-500" />
                     ) : (
                       <div className="h-5 w-5 group-disabled:opacity-0 flex items-center justify-center rounded-full bg-[var(--accent-color)]">
                         <ArrowUp className="h-3 w-3 text-black" />

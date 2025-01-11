@@ -154,7 +154,10 @@ Instructions:
 
           // Make HTML editable and preserve manual edits
           const editableHtml = makeHtmlEditable(parsedResponse.html)
-          const finalHtml = preserveEditableContent(editableHtml, editableElements)
+          const editableContents = Object.fromEntries(
+            Object.entries(editableElements).map(([key, element]) => [key, element.content])
+          )
+          const finalHtml = preserveEditableContent(editableHtml, editableContents)
 
           // Add new version
           const versionStore = useWebsiteVersionStore.getState()
@@ -239,7 +242,7 @@ async function processImages(html: string) {
   let processedHtml = html
   images.forEach((image, index) => {
     const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full h-full object-cover max-h-[320px]" loading="lazy" />`
+    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full object-cover max-h-[320px]" loading="lazy" />`
     processedHtml = processedHtml.replace(placeholder, imgHtml)
   })
 

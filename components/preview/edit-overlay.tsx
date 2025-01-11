@@ -75,7 +75,7 @@ export function EditOverlay({
     const currentContent = editRef.current?.innerText || content
     onSave(currentContent, {
       color: styles.color || '',
-      fontSize: styles.fontSize || 'text-base'
+      fontSize: styles.fontSize || 'text-base',
     })
   }, [content, styles, onSave])
 
@@ -95,26 +95,28 @@ export function EditOverlay({
     const isWithinOverlay = overlayRef.current?.contains(relatedTarget)
     const isDropdownMenu = relatedTarget?.closest('[role="menu"]')
     const isDropdownTrigger = relatedTarget?.closest('[role="button"]')
-    
+
     if (!isWithinOverlay && !isDropdownMenu && !isDropdownTrigger) {
       onCancel()
     }
   }
 
-  const colorOptions = colors.map(color => ({
+  const colorOptions = colors.map((color) => ({
     label: color.label,
     value: color.value,
     preview: (
-      <div className={cn(
-        'w-4 h-4 rounded-full bg-current shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]', 
-        color.value || 'bg-black dark:bg-white'
-      )} />
-    )
+      <div
+        className={cn(
+          'w-4 h-4 rounded-full bg-current shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]',
+          color.value || 'bg-black dark:bg-white'
+        )}
+      />
+    ),
   }))
 
-  const fontSizeOptions = fontSizes.map(size => ({
+  const fontSizeOptions = fontSizes.map((size) => ({
     label: size.label,
-    value: size.value
+    value: size.value,
   }))
 
   return (
@@ -134,7 +136,7 @@ export function EditOverlay({
           <div
             ref={editRef}
             contentEditable
-            className="min-h-[1em] outline-none rounded px-3 py-2 border border-gray-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+            className="min-h-[1em] outline-none rounded px-3 py-2 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100"
             onInput={(e) => setContent(e.currentTarget.innerText)}
             onKeyDown={handleKeyDown}
             onBlur={handleBlur}
@@ -157,16 +159,18 @@ export function EditOverlay({
             value={styles.fontSize}
             options={fontSizeOptions}
             onChange={(value) => setStyles({ ...styles, fontSize: value })}
-            triggerIcon={<Type className="h-4 w-4 text-gray-700 dark:text-gray-300" />}
+            triggerIcon={
+              <Type className="h-4 w-4 text-neutral-700 dark:text-neutral-300" />
+            }
             className="w-[120px]"
           />
 
           <div className="flex-1" />
 
           {/* Save Button */}
-          <Button 
-            onClick={handleSave} 
-            size="sm" 
+          <Button
+            onClick={handleSave}
+            size="sm"
             className="bg-pink-500 hover:bg-pink-600 text-white"
           >
             Save
