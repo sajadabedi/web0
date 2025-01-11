@@ -20,6 +20,7 @@ When CREATING a new website:
 6. Include proper viewport meta tags and content structure
 7. Include images in appropriate sections
 8. Always include dark mode support using Tailwind classes
+9. IMPORTANT: Never add any fade-in animations or fade-in related classes
 
 For images, ALWAYS use this format:
 <unsplash-image query="SEARCH_TERMS" alt="DESCRIPTIVE_ALT_TEXT" />
@@ -69,7 +70,6 @@ Preserving Manual Edits:
 - If an element has a data-editable-id attribute, do not modify its content
 - If an element is added near a manual edit, make sure not to disturb the existing content
 - Manual edits are the top priority, and any requested changes should be made around them
-
 `
 
 export const EXAMPLE_PROMPTS = [

@@ -58,7 +58,7 @@ export const useChatStore = create<ChatStore>()(
         try {
           const previewStore = usePreviewStore.getState()
           set({ isLoading: true, error: null })
-          
+
           if (abortController) {
             abortController.abort()
           }
@@ -161,7 +161,10 @@ Instructions:
             // Make HTML editable and preserve manual edits
             const editableHtml = makeHtmlEditable(parsedResponse.html)
             const editableContents = Object.fromEntries(
-              Object.entries(editableElements).map(([key, element]) => [key, element.content])
+              Object.entries(editableElements).map(([key, element]) => [
+                key,
+                element.content,
+              ])
             )
             const finalHtml = preserveEditableContent(editableHtml, editableContents)
 
@@ -195,9 +198,11 @@ Instructions:
             }))
 
             // Then update preview store
-            console.log('Updating preview store with:', { html: finalHtml, css: parsedResponse.css })
+            console.log('Updating preview store with:', {
+              html: finalHtml,
+              css: parsedResponse.css,
+            })
             previewStore.updatePreview(finalHtml, parsedResponse.css || '')
-
           } catch (error) {
             console.error('Failed to parse response:', error)
             set((state) => ({
@@ -244,7 +249,7 @@ async function processImages(html: string) {
   let processedHtml = html
   images.forEach((image, index) => {
     const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full object-cover max-h-[320px]" loading="lazy" />`
+    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full object-cover max-h-[240px]" loading="lazy" />`
     processedHtml = processedHtml.replace(placeholder, imgHtml)
   })
 

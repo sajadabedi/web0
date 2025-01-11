@@ -25,7 +25,7 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  // Clean up any app-specific styles from the HTML
+  // Clean up any app-specific styles from the HTML but preserve Tailwind classes
   const cleanHtml = site.html
     .replace(/data-[^=]+=["'][^"']*["']/g, '') // Remove all data-* attributes
     .replace(/class=["'][^"']*sonner[^"']*["']/g, '') // Remove classes containing sonner
@@ -33,5 +33,15 @@ export async function GET(
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim()
 
-  return NextResponse.json({ html: cleanHtml, css: site.css || '' })
+  // Add wrapper div with base styles
+  const wrappedHtml = `
+    <div class="container mx-auto px-4 py-8">
+      ${cleanHtml}
+    </div>
+  `
+
+  return NextResponse.json({ 
+    html: wrappedHtml, 
+    css: site.css || '' 
+  })
 }

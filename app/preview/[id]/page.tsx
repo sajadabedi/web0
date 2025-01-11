@@ -7,6 +7,7 @@ export default function PreviewPage() {
   const params = useParams()
   const [html, setHtml] = useState('')
   const [css, setCss] = useState('')
+  const [theme, setTheme] = useState('light')
 
   useEffect(() => {
     async function fetchPreview() {
@@ -33,31 +34,38 @@ export default function PreviewPage() {
   }
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: `
-        /* Reset margins and padding */
-        body {
-          margin: 0;
-          padding: 0;
-          min-height: 100vh;
-        }
-
-        /* Custom styles */
-        ${css}
-      `}} />
-      <script src="https://cdn.tailwindcss.com"></script>
-      <script dangerouslySetInnerHTML={{__html: `
-        tailwind.config = {
-          darkMode: 'class',
-          theme: {
-            extend: {}
+    <html>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script dangerouslySetInnerHTML={{__html: `
+          tailwind.config = {
+            darkMode: 'class',
+            theme: {
+              extend: {}
+            }
           }
-        }
-      `}} />
-      <div 
-        id="preview-content"
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-    </>
+        `}} />
+        <style dangerouslySetInnerHTML={{__html: `
+          /* Reset margins and padding */
+          body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+          }
+
+          /* Custom styles */
+          ${css}
+        `}} />
+      </head>
+      <body className={theme === 'dark' ? 'dark' : ''}>
+        <div 
+          id="preview-content"
+          className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          dangerouslySetInnerHTML={{ __html: html }} 
+        />
+      </body>
+    </html>
   )
 }
