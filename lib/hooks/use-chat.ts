@@ -249,7 +249,7 @@ async function processImages(html: string) {
   let processedHtml = html
   images.forEach((image, index) => {
     const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full object-cover max-h-[240px]" loading="lazy" />`
+    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full object-cover max-h-80" loading="lazy" />`
     processedHtml = processedHtml.replace(placeholder, imgHtml)
   })
 

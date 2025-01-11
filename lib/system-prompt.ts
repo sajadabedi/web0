@@ -34,7 +34,7 @@ ALWAYS respond in this exact JSON format:
 
 Tailwind Guidelines:
 - Use proper spacing utilities (p-4, m-2, etc.)
-- Use flex for layout
+- Only use flex for layout and never grid.
 - Use proper text utilities for typography
 - Make sure there's enough spacing between sections
 - Common patterns:
