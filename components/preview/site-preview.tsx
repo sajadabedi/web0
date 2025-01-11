@@ -3,12 +3,12 @@
 import { EditOverlay } from '@/components/preview/edit-overlay'
 import { LoadingToast } from '@/components/preview/loading-toast'
 import { ThemeToggle } from '@/components/theme/theme-toggle'
+import { Button } from '@/components/ui/button'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import { Globe, Share2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 interface SitePreviewProps {
@@ -105,17 +105,19 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
         const classList = Array.from(editableElement.classList)
 
         // Find font size class
-        const fontSize = classList.find((cls) =>
-          cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/)
-        ) || 'text-base'
+        const fontSize =
+          classList.find((cls) =>
+            cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/)
+          ) || 'text-base'
 
         // Find color class
-        const color = classList.find(
-          (cls) =>
-            cls.startsWith('text-') &&
-            !cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/) &&
-            !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
-        ) || ''
+        const color =
+          classList.find(
+            (cls) =>
+              cls.startsWith('text-') &&
+              !cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/) &&
+              !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
+          ) || ''
 
         setEditingState({
           id,
@@ -156,7 +158,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   const handlePublish = async () => {
     const { html, css } = usePreviewStore.getState()
     const { currentHtml, currentCss } = useChatStore.getState()
-    
+
     const rawHtml = html || currentHtml
     if (!rawHtml?.trim()) {
       console.warn('No HTML content to publish')
@@ -167,12 +169,12 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     // Create a clean HTML structure
     const contentToPublish = {
       html: rawHtml.trim(),
-      css: (css || currentCss || '').trim()
+      css: (css || currentCss || '').trim(),
     }
 
     try {
       setIsPublishing(true)
-      
+
       const response = await fetch('/api/publish', {
         method: 'POST',
         headers: {
@@ -190,10 +192,10 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
       const { id } = responseData
       const url = `${window.location.origin}/preview/${id}`
       setPublishedUrl(url)
-      
+
       // Copy URL to clipboard
       await navigator.clipboard.writeText(url)
-      
+
       toast.success('Published! URL copied to clipboard', {
         action: {
           label: 'Open',
@@ -208,50 +210,53 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     }
   }
 
-  const handleSave = useCallback((content: string, styles: { fontSize: string; color: string }) => {
-    if (!editingState) return
-    
-    const iframe = iframeRef.current
-    if (!iframe) return
+  const handleSave = useCallback(
+    (content: string, styles: { fontSize: string; color: string }) => {
+      if (!editingState) return
 
-    const doc = iframe.contentDocument
-    if (!doc) return
+      const iframe = iframeRef.current
+      if (!iframe) return
 
-    const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`)
-    if (!element) return
+      const doc = iframe.contentDocument
+      if (!doc) return
 
-    // Remove existing font size and color classes
-    const classesToRemove = Array.from(element.classList).filter(cls => 
-      cls.startsWith('text-') && (
-        cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/) ||
-        !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
+      const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`)
+      if (!element) return
+
+      // Remove existing font size and color classes
+      const classesToRemove = Array.from(element.classList).filter(
+        (cls) =>
+          cls.startsWith('text-') &&
+          (cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/) ||
+            !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/))
       )
-    )
-    element.classList.remove(...classesToRemove)
+      element.classList.remove(...classesToRemove)
 
-    // Add new styles
-    if (styles.fontSize) {
-      element.classList.add(styles.fontSize)
-    }
-    if (styles.color) {
-      element.classList.add(...styles.color.split(' '))
-    }
+      // Add new styles
+      if (styles.fontSize) {
+        element.classList.add(styles.fontSize)
+      }
+      if (styles.color) {
+        element.classList.add(...styles.color.split(' '))
+      }
 
-    // Update content
-    element.textContent = content
-    
-    // Update store with new content and styles
-    updateElement(editingState.id, content, styles)
-    
-    // Update preview store with the new HTML
-    const previewStore = usePreviewStore.getState()
-    const cleanHtml = doc.body.innerHTML
-      .replace(/contenteditable="true"/g, '')
-      .replace(/data-gramm="false"/g, '')
-    previewStore.updatePreview(cleanHtml, previewStore.css || '')
-    
-    setEditingState(null)
-  }, [editingState, updateElement])
+      // Update content
+      element.textContent = content
+
+      // Update store with new content and styles
+      updateElement(editingState.id, content, styles)
+
+      // Update preview store with the new HTML
+      const previewStore = usePreviewStore.getState()
+      const cleanHtml = doc.body.innerHTML
+        .replace(/contenteditable="true"/g, '')
+        .replace(/data-gramm="false"/g, '')
+      previewStore.updatePreview(cleanHtml, previewStore.css || '')
+
+      setEditingState(null)
+    },
+    [editingState, updateElement]
+  )
 
   return (
     <div className="relative w-full h-screen p-2">
@@ -275,7 +280,14 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
         {!html && !css ? (
           <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-neutral-500 dark:text-neutral-400 text-sm">
             <Globe className="mr-2 h-4 w-4" />
-            Preview will appear here
+            Preview will appear here.
+            <div className="-mt-2">
+              Press{' '}
+              <code className="px-1 rounded font-sans bg-neutral-200 dark:bg-neutral-800">
+                Ctrl + K
+              </code>{' '}
+              to start.
+            </div>
           </div>
         ) : (
           <iframe

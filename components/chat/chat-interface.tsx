@@ -80,7 +80,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
   return (
     <div
       className={`relative border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-[width] duration-300 ease-in-out ${
-        isExpanded ? 'w-[400px]' : 'w-[50px]'
+        isExpanded ? 'w-[450px]' : 'w-[50px]'
       }`}
     >
       <Tooltip side="right" content={`${isExpanded ? 'Collapse' : 'Expand'} (⌘+\\)`}>

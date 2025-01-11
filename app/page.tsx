@@ -5,7 +5,7 @@ import { SitePreview } from '@/components/preview/site-preview'
 import { useState } from 'react'
 
 export default function Home() {
-  const [sidebarExpanded, setSidebarExpanded] = useState(true)
+  const [sidebarExpanded, setSidebarExpanded] = useState(false)
 
   return (
     <main className="flex h-screen bg-[#F4F4F0] dark:bg-neutral-900">
