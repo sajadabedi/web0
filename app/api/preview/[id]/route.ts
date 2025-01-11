@@ -3,21 +3,15 @@ import { publishedSites } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
-type Props = {
-  params: {
-    id: string
-  }
-}
-
 export async function GET(
   request: NextRequest,
-  props: Props
+  context: { params: { id: string } }
 ) {
-  if (!props.params?.id) {
+  if (!context.params?.id) {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 })
   }
 
-  const id = props.params.id
+  const id = context.params.id
 
   const sites = await db
     .select()
