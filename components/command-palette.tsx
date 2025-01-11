@@ -46,8 +46,8 @@ export function CommandPalette() {
               />
               {inputValue.trim() && (
                 <Tooltip content="Send message">
-                  <div className="h-5 w-5 col-start-1 col-end-1 row-start-1 row-end-1 flex items-center justify-center rounded-full bg-black dark:bg-white justify-self-end mr-2">
-                    <ArrowUp className="h-3 w-3 text-white dark:text-black" />
+                  <div className="h-5 w-5 col-start-1 col-end-1 row-start-1 row-end-1 flex items-center justify-center rounded-full justify-self-end mr-3 bg-[var(--accent-color)]">
+                    <ArrowUp className="h-3 w-3 text-black" />
                   </div>
                 </Tooltip>
               )}
