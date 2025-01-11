@@ -4,15 +4,16 @@ Build your website layout through natural conversations with AI! G0 Builder comb
 
 ## Key Features
 
-- 💬 **AI Chat Interface** - Have natural conversations with AI to build and modify your website
-- 🎨 **Visual Editor** - Make direct changes to your website in the preview canvas
-- ⌨️ **Quick Commands** - Use CMD+K to quickly generate or modify website elements
-- 🔄 **Version History** - Easily revert changes by hovering over chat history
-- 🎯 **Inline Editing** - Click on any text to edit content, colors, and styling directly
-- 🌓 **Dark Mode** - Toggle between light and dark themes for both the builder and your website
-- 🚀 **Instant Publishing** - Get a shareable URL for your website with one click
-- 🤝 **Hybrid Editing** - Seamlessly switch between AI assistance and manual editing
-- 🧠 **Context-Aware AI** - AI understands and builds upon your manual changes
+- **AI Chat Interface** - Have natural conversations with AI to build and modify your website
+- **Visual Editor** - Make direct changes to your website in the preview canvas
+- **Quick Commands** - Use CMD+K to quickly generate or modify website elements
+- **Version History** - Easily revert changes by hovering over chat history
+- **Section Navigation** - Jump between sections of your website
+- **Inline Editing** - Click on any text to edit content, colors, and styling directly
+- **Dark Mode** - Toggle between light and dark themes for both the builder and your website
+- **Instant Publishing** - Get a shareable URL for your website with one click
+- **Hybrid Editing** - Seamlessly switch between AI assistance and manual editing
+- **Context-Aware AI** - AI understands and builds upon your manual changes
 
 ## Tech Stack
 
