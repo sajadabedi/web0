@@ -261,14 +261,15 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   return (
     <div className="relative w-full h-screen p-2">
       <div className="flex items-center justify-between mb-2">
+        <h3 className="flex-1 text-black dark:text-white font-medium">G0 Builder</h3>
         <ThemeToggle />
         <Button
-          variant="outline"
+          variant="default"
           size="sm"
           onClick={handlePublish}
           disabled={isPublishing || !html}
+          className="ml-2"
         >
-          <Share2 className="mr-2 h-4 w-4" />
           {isPublishing ? 'Publishing...' : 'Publish'}
         </Button>
       </div>
@@ -276,7 +277,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
         isLoading={showToast}
         message={currentHtml ? 'Making changes...' : 'Creating your website...'}
       />
-      <div className="h-[calc(100%-45px)] w-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900 relative text-neutral-600 dark:text-neutral-400 shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),0_1px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_1px_4px_rgba(255,255,255,0.1)]">
+      <div className="h-[calc(100%-40px)] w-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900 relative text-neutral-600 dark:text-neutral-400 shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),0_1px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_1px_4px_rgba(255,255,255,0.1)]">
         {!html && !css ? (
           <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-neutral-500 dark:text-neutral-400 text-sm">
             <Globe className="mr-2 h-4 w-4" />
