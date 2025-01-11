@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# G0 Builder - AI-Powered Website Builder
+
+Build your website layout through natural conversations with AI! G0 Builder combines the power of AI with an intuitive visual editor to make website creation easy.
+
+![G0 Builder Preview](link-to-preview-image)
+
+## Key Features
+
+- 💬 **AI Chat Interface** - Have natural conversations with AI to build and modify your website
+- 🎨 **Visual Editor** - Make direct changes to your website in the preview canvas
+- ⌨️ **Quick Commands** - Use CMD+K to quickly generate or modify website elements
+- 🔄 **Version History** - Easily revert changes by hovering over chat history
+- 🎯 **Inline Editing** - Click on any text to edit content, colors, and styling directly
+- 🌓 **Dark Mode** - Toggle between light and dark themes for both the builder and your website
+- 🚀 **Instant Publishing** - Get a shareable URL for your website with one click
+- 🤝 **Hybrid Editing** - Seamlessly switch between AI assistance and manual editing
+- 🧠 **Context-Aware AI** - AI understands and builds upon your manual changes
+
+## Tech Stack
+
+- Next.js (App Router)
+- TypeScript
+- Tailwind CSS
+- Radix UI
+- OpenAI API
+- PostgreSQL
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Start the development:
+   ```bash
+   pnpm install && pnpm run dev
+   ```
+3. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Design
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Check out our design prototype on [Figma](https://www.figma.com/design/ruGrgn03eZp7Fq5qIanJ5d/G0-Builder?node-id=9-18&t=9kE73l3vnOA1jme0-1)
