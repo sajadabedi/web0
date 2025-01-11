@@ -8,23 +8,11 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { usePreviewStore } from '../stores/use-preview-store'
 import { makeHtmlEditable, preserveEditableContent } from '../utils/html-parser'
-import { getMultipleUnsplashImages } from '../utils/unsplash'
-
-interface ChatStore {
-  messages: Message[]
-  isLoading: boolean
-  error: string | null
-  currentHtml: string | null
-  currentCss: string | null
-  sendMessage: (content: string) => Promise<void>
-  setError: (error: string | null) => void
-  removeMessagesAfter: (messageId: string) => void
-  stopGeneration: () => void
-}
+import { parseOpenAIResponse } from '../utils/response-parser'
+import type { ChatStore } from '../types/chat'
 
 let abortController: AbortController | null = null
 
-// Main chat store with website generation functionality
 export const useChatStore = create<ChatStore>()(
   devtools(
     (set, get) => ({
@@ -34,7 +22,6 @@ export const useChatStore = create<ChatStore>()(
       currentHtml: null,
       currentCss: null,
 
-      // Stop website generation
       stopGeneration: () => {
         if (abortController) {
           abortController.abort()
@@ -53,7 +40,6 @@ export const useChatStore = create<ChatStore>()(
         })
       },
 
-      // Send a new message and generate website
       sendMessage: async (content: string) => {
         try {
           const previewStore = usePreviewStore.getState()
@@ -232,47 +218,3 @@ Instructions:
     }
   )
 )
-
-// Replace Unsplash image placeholders with actual images
-async function processImages(html: string) {
-  // Regular expression to match Unsplash image placeholders
-  const imageRegex = /<unsplash-image query="([^"]+)" alt="([^"]+)" \/>/g
-  const matches = [...html.matchAll(imageRegex)]
-
-  // If no matches, return original HTML
-  if (matches.length === 0) return html
-
-  const queries = matches.map((match) => match[1])
-  const alts = matches.map((match) => match[2])
-  const images = await getMultipleUnsplashImages(queries)
-
-  let processedHtml = html
-  images.forEach((image, index) => {
-    const placeholder = `<unsplash-image query="${queries[index]}" alt="${alts[index]}" />`
-    const imgHtml = `<img src="${image.url}" alt="${alts[index]}" class="w-full object-cover max-h-80" loading="lazy" />`
-    processedHtml = processedHtml.replace(placeholder, imgHtml)
-  })
-
-  return processedHtml
-}
-
-// Extract and validate JSON response from OpenAI stream
-async function parseOpenAIResponse(fullMessage: string) {
-  const cleanMessage = fullMessage.replace(/[\u0000-\u001F\u007F-\u009F]/g, '')
-  const jsonStartIndex = cleanMessage.indexOf('{')
-  const jsonEndIndex = cleanMessage.lastIndexOf('}') + 1
-
-  if (jsonStartIndex === -1 || jsonEndIndex <= jsonStartIndex) {
-    throw new Error('Invalid JSON response')
-  }
-
-  const jsonStr = cleanMessage.slice(jsonStartIndex, jsonEndIndex)
-  const parsedResponse = JSON.parse(jsonStr)
-
-  if (!parsedResponse.html || typeof parsedResponse.explanation !== 'string') {
-    throw new Error('Invalid response format')
-  }
-
-  parsedResponse.html = await processImages(parsedResponse.html)
-  return parsedResponse
-}
