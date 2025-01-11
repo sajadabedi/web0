@@ -4,19 +4,14 @@ import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import { useWebsiteVersionStore } from './use-website-version-store'
 
-interface EditableElement {
-  content: string
-  styles?: {
-    fontSize?: string
-    color?: string
-  }
-}
-
-type Theme = 'light' | 'dark'
-
-interface ElementStyles {
+export interface EditableStyles {
   fontSize?: string
   color?: string
+}
+
+export interface EditableElement {
+  content: string
+  styles?: EditableStyles
 }
 
 export interface PreviewStore {
@@ -25,48 +20,21 @@ export interface PreviewStore {
   theme: 'light' | 'dark'
   editableElements: Record<string, EditableElement>
   updatePreview: (html: string, css: string) => void
-  updateElement: (id: string, content: string, styles: ElementStyles) => void
+  updateElement: (id: string, content: string, styles: EditableStyles) => void
   toggleTheme: () => void
   revertToVersion: (versionId: string) => void
 }
 
-// Helper function to convert Tailwind classes to inline styles
-function convertTailwindToInline(styles: ElementStyles): string {
+function convertTailwindToInline(styles: EditableStyles): string {
   const styleArray: string[] = []
-
+  
   if (styles.fontSize) {
-    const sizeMap: Record<string, string> = {
-      'text-xs': '12px',
-      'text-sm': '14px',
-      'text-base': '16px',
-      'text-lg': '18px',
-      'text-xl': '20px',
-      'text-2xl': '24px',
-      'text-3xl': '30px',
-      'text-4xl': '36px',
-      'text-5xl': '48px',
-      'text-6xl': '60px',
-    }
-    const size = sizeMap[styles.fontSize] || '16px'
-    styleArray.push(`font-size: ${size}`)
+    styleArray.push(`font-size: ${styles.fontSize}`)
   }
-
   if (styles.color) {
-    const colorMap: Record<string, string> = {
-      'text-red-500': '#ef4444',
-      'text-blue-500': '#3b82f6',
-      'text-green-500': '#22c55e',
-      'text-yellow-500': '#eab308',
-      'text-purple-500': '#a855f7',
-      'text-pink-500': '#ec4899',
-      'text-gray-500': '#6b7280',
-      'text-black': '#000000',
-      'text-white': '#ffffff',
-    }
-    const color = colorMap[styles.color] || styles.color.replace('text-', '')
-    styleArray.push(`color: ${color}`)
+    styleArray.push(`color: ${styles.color}`)
   }
-
+  
   return styleArray.join('; ')
 }
 
@@ -97,17 +65,6 @@ export const usePreviewStore = create<PreviewStore>()(
           const id = el.getAttribute('data-editable-id')
           if (id && id in currentElements) {
             updatedElements[id] = currentElements[id]
-            
-            // Apply stored styles to the element
-            const styles = currentElements[id].styles
-            if (styles) {
-              const inlineStyles = convertTailwindToInline(styles)
-              if (inlineStyles) {
-                el.setAttribute('style', inlineStyles)
-              }
-            }
-            
-            // Update content
             el.textContent = currentElements[id].content
           }
         })
@@ -119,36 +76,13 @@ export const usePreviewStore = create<PreviewStore>()(
         })
       },
 
-      updateElement: (id: string, content: string, styles: ElementStyles) => {
-        const { html } = get()
-        if (!html) return
-
-        // Update the store state first
+      updateElement: (id: string, content: string, styles: EditableStyles) => {
         set((state) => ({
           editableElements: {
             ...state.editableElements,
             [id]: { content, styles }
           }
         }))
-
-        // Then update the HTML
-        const tempDiv = document.createElement('div')
-        tempDiv.innerHTML = html
-
-        const element = tempDiv.querySelector(`[data-editable-id="${id}"]`)
-        if (element) {
-          // Update content
-          element.textContent = content
-
-          // Apply styles
-          const inlineStyles = convertTailwindToInline(styles)
-          if (inlineStyles) {
-            element.setAttribute('style', inlineStyles)
-          }
-
-          // Update the HTML
-          set({ html: tempDiv.innerHTML })
-        }
       },
 
       toggleTheme: () => {

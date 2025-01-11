@@ -25,26 +25,28 @@ interface EditableStyles {
 }
 
 const fontSizes = [
+  { label: 'Extra Small', value: 'text-xs' },
   { label: 'Small', value: 'text-sm' },
-  { label: 'Normal', value: 'text-base' },
+  { label: 'Base', value: 'text-base' },
   { label: 'Large', value: 'text-lg' },
-  { label: 'XL', value: 'text-xl' },
+  { label: 'Extra Large', value: 'text-xl' },
   { label: '2XL', value: 'text-2xl' },
   { label: '3XL', value: 'text-3xl' },
+  { label: '4XL', value: 'text-4xl' },
+  { label: '5XL', value: 'text-5xl' },
+  { label: '6XL', value: 'text-6xl' },
 ] as const
 
 const colors = [
   { label: 'Default', value: '' },
-  { label: 'Black', value: 'text-black' },
-  { label: 'White', value: 'text-white' },
-  { label: 'Gray', value: 'text-gray-500' },
-  { label: 'Red', value: 'text-red-500' },
-  { label: 'Orange', value: 'text-orange-500' },
-  { label: 'Yellow', value: 'text-yellow-500' },
-  { label: 'Green', value: 'text-green-500' },
-  { label: 'Blue', value: 'text-blue-500' },
-  { label: 'Purple', value: 'text-purple-500' },
-  { label: 'Pink', value: 'text-pink-500' },
+  { label: 'Black', value: 'text-black dark:text-white' },
+  { label: 'Gray', value: 'text-gray-600 dark:text-gray-300' },
+  { label: 'Red', value: 'text-red-600 dark:text-red-400' },
+  { label: 'Blue', value: 'text-blue-600 dark:text-blue-400' },
+  { label: 'Green', value: 'text-green-600 dark:text-green-400' },
+  { label: 'Yellow', value: 'text-yellow-600 dark:text-yellow-400' },
+  { label: 'Purple', value: 'text-purple-600 dark:text-purple-400' },
+  { label: 'Pink', value: 'text-pink-600 dark:text-pink-400' },
 ] as const
 
 export function EditOverlay({
@@ -72,11 +74,12 @@ export function EditOverlay({
   }, [initialContent])
 
   const handleSave = useCallback(() => {
-    const currentContent = editRef.current?.innerText || content
-    onSave(currentContent, {
-      color: styles.color || '',
-      fontSize: styles.fontSize || 'text-base',
-    })
+    const updatedStyles = {
+      fontSize: styles.fontSize,
+      color: styles.color,
+    }
+
+    onSave(content, updatedStyles)
   }, [content, styles, onSave])
 
   // Register keyboard shortcuts

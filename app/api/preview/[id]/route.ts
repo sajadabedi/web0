@@ -25,10 +25,11 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  // Clean up any app-specific styles from the HTML but preserve Tailwind classes
+  // Preserve all Tailwind classes while cleaning up app-specific attributes
   const cleanHtml = site.html
-    .replace(/data-[^=]+=["'][^"']*["']/g, '') // Remove all data-* attributes
-    .replace(/class=["'][^"']*sonner[^"']*["']/g, '') // Remove classes containing sonner
+    .replace(/data-gramm="false"/g, '')
+    .replace(/contenteditable="true"/g, '')
+    .replace(/data-editable-id="[^"]*"/g, '')
     .replace(/\s+class="\s*"/g, '') // Remove empty class attributes
     .replace(/\s+/g, ' ') // Normalize whitespace
     .trim()

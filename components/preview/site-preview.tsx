@@ -106,16 +106,16 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
 
         // Find font size class
         const fontSize = classList.find((cls) =>
-          cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/)
-        )
+          cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/)
+        ) || 'text-base'
 
         // Find color class
         const color = classList.find(
           (cls) =>
             cls.startsWith('text-') &&
-            !cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/) &&
+            !cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/) &&
             !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
-        )
+        ) || ''
 
         setEditingState({
           id,
@@ -125,8 +125,8 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
             y: rect.top + iframeRect.top,
           },
           styles: {
-            fontSize: fontSize || 'text-base',
-            color: color || '',
+            fontSize,
+            color,
           },
         })
       }
@@ -208,24 +208,50 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     }
   }
 
-  const handleSave = useCallback(
-    (content: string, styles: { color: string; fontSize: string }) => {
-      const doc = iframeRef.current?.contentDocument
-      if (!doc || !editingState) return
+  const handleSave = useCallback((content: string, styles: { fontSize: string; color: string }) => {
+    if (!editingState) return
+    
+    const iframe = iframeRef.current
+    if (!iframe) return
 
-      const element = doc.querySelector(
-        `[data-editable-id="${editingState.id}"]`
-      ) as HTMLElement
-      if (!element) return
+    const doc = iframe.contentDocument
+    if (!doc) return
 
-      // Update content and styles in the store
-      updateElement(editingState.id, content, styles)
+    const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`)
+    if (!element) return
 
-      // Close edit overlay
-      setEditingState(null)
-    },
-    [editingState, updateElement]
-  )
+    // Remove existing font size and color classes
+    const classesToRemove = Array.from(element.classList).filter(cls => 
+      cls.startsWith('text-') && (
+        cls.match(/^text-(xs|sm|base|lg|xl|2xl|3xl|4xl|5xl|6xl)$/) ||
+        !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
+      )
+    )
+    element.classList.remove(...classesToRemove)
+
+    // Add new styles
+    if (styles.fontSize) {
+      element.classList.add(styles.fontSize)
+    }
+    if (styles.color) {
+      element.classList.add(...styles.color.split(' '))
+    }
+
+    // Update content
+    element.textContent = content
+    
+    // Update store with new content and styles
+    updateElement(editingState.id, content, styles)
+    
+    // Update preview store with the new HTML
+    const previewStore = usePreviewStore.getState()
+    const cleanHtml = doc.body.innerHTML
+      .replace(/contenteditable="true"/g, '')
+      .replace(/data-gramm="false"/g, '')
+    previewStore.updatePreview(cleanHtml, previewStore.css || '')
+    
+    setEditingState(null)
+  }, [editingState, updateElement])
 
   return (
     <div className="relative w-full h-screen p-2">
