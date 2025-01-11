@@ -3,9 +3,15 @@ import { publishedSites } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { NextRequest, NextResponse } from 'next/server'
 
+interface PreviewParams {
+  params: {
+    id: string
+  }
+}
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: PreviewParams
 ) {
   if (!params?.id) {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 })
