@@ -19,6 +19,7 @@ When CREATING a new website:
 5. Use Tailwind CSS classes for ALL styling
 6. Include proper viewport meta tags and content structure
 7. Include images in appropriate sections
+8. Always include dark mode support using Tailwind classes
 
 For images, ALWAYS use this format:
 <unsplash-image query="SEARCH_TERMS" alt="DESCRIPTIVE_ALT_TEXT" />

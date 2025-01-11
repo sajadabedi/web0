@@ -35,20 +35,24 @@ export default function PreviewPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: `
-        /* Reset default styles */
+        /* Reset margins and padding */
         body {
           margin: 0;
           padding: 0;
           min-height: 100vh;
         }
-        
-        #preview-content {
-          width: 100%;
-          min-height: 100vh;
-        }
 
         /* Custom styles */
         ${css}
+      `}} />
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script dangerouslySetInnerHTML={{__html: `
+        tailwind.config = {
+          darkMode: 'class',
+          theme: {
+            extend: {}
+          }
+        }
       `}} />
       <div 
         id="preview-content"

@@ -35,7 +35,8 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   useEffect(() => {
     if (!html || !iframeRef.current) return
 
-    const doc = iframeRef.current.contentDocument
+    const iframe = iframeRef.current
+    const doc = iframe.contentDocument
     if (!doc) return
 
     // Write the HTML content
@@ -44,6 +45,17 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
       <!DOCTYPE html>
       <html class="${theme === 'dark' ? 'dark' : ''}">
         <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <script src="https://cdn.tailwindcss.com"></script>
+          <script>
+            tailwind.config = {
+              darkMode: 'class',
+              theme: {
+                extend: {}
+              }
+            }
+          </script>
           <style>
             :root {
               color-scheme: light dark;
@@ -87,8 +99,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
         if (!id) return
 
         const rect = editableElement.getBoundingClientRect()
-        const iframeRect = iframeRef.current?.getBoundingClientRect()
-        if (!iframeRect) return
+        const iframeRect = iframe.getBoundingClientRect()
 
         // Get current styles more accurately
         const classList = Array.from(editableElement.classList)
@@ -121,8 +132,25 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
       }
     }
 
-    doc.body.addEventListener('click', handleClick)
-    return () => doc.body.removeEventListener('click', handleClick)
+    // Wait for iframe to load before adding event listener
+    const handleLoad = () => {
+      const body = doc.body
+      if (body) {
+        body.addEventListener('click', handleClick)
+      }
+    }
+
+    // Add load event listener
+    iframe.addEventListener('load', handleLoad)
+
+    // Cleanup function
+    return () => {
+      iframe.removeEventListener('load', handleLoad)
+      const body = doc.body
+      if (body) {
+        body.removeEventListener('click', handleClick)
+      }
+    }
   }, [html, css, theme])
 
   const handlePublish = async () => {
