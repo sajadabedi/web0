@@ -79,7 +79,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
 
   return (
     <div
-      className={`relative border-r dark:border-neutral-800 transition-[width] duration-300 ease-in-out ${
+      className={`relative border-r border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 transition-[width] duration-300 ease-in-out ${
         isExpanded ? 'w-[400px]' : 'w-[50px]'
       }`}
     >
@@ -100,7 +100,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
             <div className="pb-4">
               {messages.length === 0 ? (
                 <div className="h-[calc(100vh-12rem)] flex flex-col items-center justify-center p-4 space-y-4">
-                  <p className="text-sm text-center text-gray-600 dark:text-neutral-400 w-[80%]">
+                  <p className="text-sm text-center text-neutral-600 dark:text-neutral-400 w-[80%]">
                     Starter templates to get you started.
                   </p>
                   <div className="w-full max-w-sm justify-center flex flex-wrap gap-2">
@@ -108,7 +108,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
                       <button
                         key={label}
                         onClick={() => handleExampleClick({ label, prompt })}
-                        className="px-3 py-1 text-gray-600 dark:text-neutral-400 text-sm bg-gray-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                        className="px-3 py-1 text-neutral-600 dark:text-neutral-400 text-sm bg-neutral-100 dark:bg-neutral-800 rounded-full hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
                         disabled={isLoading}
                       >
                         {label}
@@ -126,9 +126,9 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
                       }`}
                     >
                       <div
-                        className={`group relative p-3 rounded-xl text-gray-800 dark:text-white text-[14px] font-[450] ${
+                        className={`group relative p-3 rounded-xl text-neutral-800 dark:text-white text-[14px] font-[450] ${
                           msg.role === 'user'
-                            ? 'bg-gray-100 dark:bg-neutral-800 max-w-[80%]'
+                            ? 'bg-neutral-100 dark:bg-neutral-800 max-w-[80%]'
                             : 'bg-transparent'
                         }`}
                       >
@@ -156,7 +156,7 @@ export function ChatInterface({ isExpanded, onExpandedChange }: ChatInterfacePro
             </div>
           </ScrollArea>
 
-          <div className="border-t dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
+          <div className="border-t dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900">
             <form onSubmit={handleSubmit} className="p-3">
               <div className="relative flex items-center">
                 <input

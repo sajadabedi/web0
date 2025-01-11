@@ -1,12 +1,13 @@
 'use client'
 
-import { LoadingToast } from '@/components/preview/loading-toast'
 import { EditOverlay } from '@/components/preview/edit-overlay'
+import { LoadingToast } from '@/components/preview/loading-toast'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
 import { Globe } from 'lucide-react'
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SitePreviewProps {
   sidebarExpanded?: boolean
@@ -14,7 +15,7 @@ interface SitePreviewProps {
 
 export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const { html, css, updateElement } = usePreviewStore()
+  const { html, css, theme, updateElement } = usePreviewStore()
   const { getCurrentVersion } = useWebsiteVersionStore()
   const { isLoading, currentHtml } = useChatStore()
   const [editingState, setEditingState] = useState<{
@@ -37,12 +38,23 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     doc.open()
     doc.write(`
       <!DOCTYPE html>
-      <html>
+      <html class="${theme === 'dark' ? 'dark' : ''}">
         <head>
           <style>
+            :root {
+              color-scheme: light dark;
+            }
+
             body {
               margin: 0;
               padding: 20px;
+              background-color: #ffffff;
+              color: #000000;
+            }
+
+            .dark body {
+              background-color: #171717;
+              color: #ffffff;
             }
 
             [data-editable-id] {
@@ -76,15 +88,18 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
 
         // Get current styles more accurately
         const classList = Array.from(editableElement.classList)
-        
+
         // Find font size class
-        const fontSize = classList.find(cls => cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/))
-        
+        const fontSize = classList.find((cls) =>
+          cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/)
+        )
+
         // Find color class - exclude font size classes and other text-related classes
-        const color = classList.find(cls => 
-          cls.startsWith('text-') && 
-          !cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/) &&
-          !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
+        const color = classList.find(
+          (cls) =>
+            cls.startsWith('text-') &&
+            !cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/) &&
+            !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
         )
 
         // Get current element from store to merge with any existing styles
@@ -96,12 +111,12 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
           content: editableElement.innerText || '',
           position: {
             x: rect.left + iframeRect.left,
-            y: rect.top + iframeRect.top
+            y: rect.top + iframeRect.top,
           },
           styles: {
             fontSize: fontSize || currentStyles.fontSize || 'text-base',
-            color: color || currentStyles.color || ''
-          }
+            color: color || currentStyles.color || '',
+          },
         })
       }
     }
@@ -109,14 +124,16 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
     // Use event delegation on document body
     doc.body.addEventListener('click', handleClick)
     return () => doc.body.removeEventListener('click', handleClick)
-  }, [html, css])
+  }, [html, css, theme])
 
   const handleSave = useCallback(
     (content: string, styles: { color: string; fontSize: string }) => {
       const doc = iframeRef.current?.contentDocument
       if (!doc || !editingState) return
 
-      const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`) as HTMLElement
+      const element = doc.querySelector(
+        `[data-editable-id="${editingState.id}"]`
+      ) as HTMLElement
       if (!element) return
 
       // Update content and styles in the store
@@ -129,14 +146,18 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   )
 
   return (
-    <div className="relative w-full h-full p-2">
+    <div className="relative w-full h-screen p-2">
+      <div className="flex items-center justify-between mb-2">
+        <ThemeToggle />
+        <button>Publish</button>
+      </div>
       <LoadingToast
         isLoading={showToast}
         message={currentHtml ? 'Making changes...' : 'Creating your website...'}
       />
-      <div className="h-full w-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900 relative text-gray-600 shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),0_1px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_1px_4px_rgba(255,255,255,0.1)]">
+      <div className="h-[calc(100%-45px)] w-full rounded-lg overflow-hidden bg-white dark:bg-neutral-900 relative text-neutral-600 dark:text-neutral-400 shadow-[0_0_0_0.5px_rgba(0,0,0,0.1),0_1px_4px_rgba(0,0,0,0.1)] dark:shadow-[0_0_0_0.5px_rgba(255,255,255,0.1),0_1px_4px_rgba(255,255,255,0.1)]">
         {!html && !css ? (
-          <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-muted-foreground dark:text-neutral-500 text-sm">
+          <div className="absolute inset-0 flex flex-col gap-3 items-center justify-center text-neutral-500 dark:text-neutral-400 text-sm">
             <Globe className="mr-2 h-4 w-4" />
             Preview will appear here
           </div>

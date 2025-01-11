@@ -1,7 +1,8 @@
-You are an expert in TypeScript, Next.js App Router, React, Shadcn UI, Radix UI and Tailwind.
+You are an expert in TypeScript, Next.js App Router, React, Radix UI and Tailwind.
 You want to build an ai website builder for Next.js using Next.js App Router. user should be able to see a preview of the website they are building and be able to edit the website layout and content by promoting ai as well as editing it on the preview canvas section. user can itarete on the website building process via chat where they can ask for changes to the website layout and content. or directly change the text or images on the preview canvas.
 you should be using unsplash for image placeholder.
 use gpt-4o for this prompt and stream the response.
+while adding a new feature don't alter non-relevant components or features.
 
 Code Style and Structure
 

@@ -12,12 +12,16 @@ interface EditableElement {
   }
 }
 
+type Theme = 'light' | 'dark'
+
 interface PreviewState {
   html: string
   css: string
+  theme: Theme
   editableElements: Record<string, EditableElement>
   updatePreview: (html: string, css: string) => void
   revertToVersion: (versionId: string) => void
+  toggleTheme: () => void
   updateElement: (
     elementId: string,
     content: string,
@@ -30,6 +34,7 @@ export const usePreviewStore = create<PreviewState>()(
     (set, get) => ({
       html: '',
       css: '',
+      theme: 'light',
       editableElements: {},
 
       updatePreview: (html: string, css: string) => {
@@ -122,6 +127,12 @@ export const usePreviewStore = create<PreviewState>()(
             editableElements: newEditableElements,
           }
         })
+      },
+
+      toggleTheme: () => {
+        set((state) => ({
+          theme: state.theme === 'light' ? 'dark' : 'light'
+        }))
       },
 
       revertToVersion: (versionId: string) => {
