@@ -5,7 +5,6 @@ import { EditOverlay } from '@/components/preview/edit-overlay'
 import { useChatStore } from '@/lib/hooks/use-chat'
 import { usePreviewStore } from '@/lib/stores/use-preview-store'
 import { useWebsiteVersionStore } from '@/lib/stores/use-website-version-store'
-import { makeHtmlEditable, extractEditableContent } from '@/lib/utils/html-parser'
 import { Globe } from 'lucide-react'
 import { useEffect, useRef, useCallback, useState } from 'react'
 
@@ -28,59 +27,22 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
   // Only show toast when sidebar is collapsed and there's loading
   const showToast = !sidebarExpanded && isLoading
 
-  // Memoize the update function to keep it stable
-  const handleUpdateElement = useCallback(
-    (id: string, content: string) => {
-      updateElement(id, content)
-    },
-    [updateElement]
-  )
-
   useEffect(() => {
-    if (!iframeRef.current) return
+    if (!html || !iframeRef.current) return
 
     const doc = iframeRef.current.contentDocument
     if (!doc) return
 
-    // Get the current version if available
-    const currentVersion = getCurrentVersion()
-    const finalHtml = currentVersion?.html || html
-    const finalCss = currentVersion?.css || css
-
-    // Skip if no HTML content
-    if (!finalHtml) return
-
-    // Make HTML editable and extract content
-    const editableHtml = makeHtmlEditable(finalHtml)
-    const editableContent = extractEditableContent(editableHtml)
-
-    // Update store with editable content (only for new elements)
-    Object.entries(editableContent).forEach(([id, content]) => {
-      if (!usePreviewStore.getState().editableElements[id]) {
-        handleUpdateElement(id, content)
-      }
-    })
-
-    // Create a clean document with sandboxed scripts
-    const content = `
+    // Write the HTML content
+    doc.open()
+    doc.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
           <style>
-            /* Reset default styles */
-            *, *::before, *::after {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-
             body {
-              font-family: 'Inter', system-ui, -apple-system, sans-serif;
-              line-height: 1.5;
-              -webkit-font-smoothing: antialiased;
+              margin: 0;
+              padding: 20px;
             }
 
             [data-editable-id] {
@@ -92,150 +54,78 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
               outline-color: rgba(244, 114, 182, 0.5);
             }
 
-            ${finalCss}
+            ${css}
           </style>
         </head>
-        <body>
-          ${editableHtml}
-          <script>
-            // Sandbox any scripts in a closure to avoid global scope pollution
-            (function() {
-              // Initialize Tailwind in an isolated scope
-              const tailwindScript = document.createElement('script');
-              tailwindScript.src = 'https://cdn.tailwindcss.com';
-              tailwindScript.onload = function() {
-                window.tailwind.config = {
-                  theme: {
-                    extend: {
-                      fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                      },
-                    },
-                  },
-                };
-              };
-              document.head.appendChild(tailwindScript);
-
-              // Add click handlers for editable elements
-              document.addEventListener('click', (e) => {
-                const editableElement = e.target.closest('[data-editable-id]');
-                if (editableElement) {
-                  const id = editableElement.getAttribute('data-editable-id');
-                  const text = editableElement.innerText || '';
-                  const rect = editableElement.getBoundingClientRect();
-                  window.parent.postMessage({
-                    type: 'elementClick',
-                    id,
-                    content: text,
-                    rect: {
-                      x: rect.left,
-                      y: rect.top,
-                      width: rect.width,
-                      height: rect.height
-                    }
-                  }, '*');
-                }
-              });
-            })();
-          </script>
-        </body>
+        <body>${html}</body>
       </html>
-    `
-
-    // Write the content to the iframe
-    doc.open()
-    doc.write(content)
+    `)
     doc.close()
-  }, [html, css, getCurrentVersion, handleUpdateElement])
 
-  const handleIframeLoad = () => {
-    const iframe = iframeRef.current
-    if (!iframe || !iframe.contentDocument) return
+    // Add click handler to document and use event delegation
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const editableElement = target.closest('[data-editable-id]') as HTMLElement
+      if (editableElement) {
+        const id = editableElement.getAttribute('data-editable-id')
+        if (!id) return
 
-    // Inject script into iframe
-    const script = iframe.contentDocument.createElement('script')
-    script.textContent = `
-      document.addEventListener('click', (e) => {
-        const editableElement = e.target.closest('[data-editable-id]')
-        if (editableElement) {
-          const id = editableElement.getAttribute('data-editable-id')
-          const text = editableElement.innerText || ''
-          const rect = editableElement.getBoundingClientRect()
-          
-          window.parent.postMessage({
-            type: 'elementClick',
-            id,
-            content: text,
-            rect: {
-              x: rect.left,
-              y: rect.top,
-              width: rect.width,
-              height: rect.height
-            }
-          }, '*')
-        }
-      })
-    `
-    iframe.contentDocument.head.appendChild(script)
-  }
+        const rect = editableElement.getBoundingClientRect()
+        const iframeRect = iframeRef.current?.getBoundingClientRect()
+        if (!iframeRect) return
 
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data.type === 'elementClick') {
-        const iframe = iframeRef.current
-        if (!iframe) return
+        // Get current styles more accurately
+        const classList = Array.from(editableElement.classList)
+        
+        // Find font size class
+        const fontSize = classList.find(cls => cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/))
+        
+        // Find color class - exclude font size classes and other text-related classes
+        const color = classList.find(cls => 
+          cls.startsWith('text-') && 
+          !cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/) &&
+          !cls.match(/^text-(left|right|center|justify|wrap|nowrap|clip|ellipsis)$/)
+        )
 
-        const doc = iframe.contentDocument
-        if (!doc) return
-
-        const element = doc.querySelector(`[data-editable-id="${event.data.id}"]`) as HTMLElement
-        if (!element) return
-
-        // Get current styles
-        const classList = Array.from(element.classList)
-        const fontSize = classList.find(cls => cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/)) || 'text-base'
-        const color = classList.find(cls => cls.startsWith('text-') && !cls.match(/^text-(sm|base|lg|xl|2xl|3xl)$/)) || ''
-
-        const iframeRect = iframe.getBoundingClientRect()
-        const rect = event.data.rect
+        // Get current element from store to merge with any existing styles
+        const currentElement = usePreviewStore.getState().editableElements[id]
+        const currentStyles = currentElement?.styles || {}
 
         setEditingState({
-          id: event.data.id,
-          content: event.data.content,
+          id,
+          content: editableElement.innerText || '',
           position: {
-            x: rect.x + iframeRect.left,
-            y: rect.y + iframeRect.top
+            x: rect.left + iframeRect.left,
+            y: rect.top + iframeRect.top
           },
-          styles: { fontSize, color }
+          styles: {
+            fontSize: fontSize || currentStyles.fontSize || 'text-base',
+            color: color || currentStyles.color || ''
+          }
         })
       }
     }
 
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [])
+    // Use event delegation on document body
+    doc.body.addEventListener('click', handleClick)
+    return () => doc.body.removeEventListener('click', handleClick)
+  }, [html, css])
 
   const handleSave = useCallback(
     (content: string, styles: { color: string; fontSize: string }) => {
       const doc = iframeRef.current?.contentDocument
-      if (!doc) return
+      if (!doc || !editingState) return
 
-      const element = doc.querySelector(`[data-editable-id="${editingState?.id}"]`) as HTMLElement
+      const element = doc.querySelector(`[data-editable-id="${editingState.id}"]`) as HTMLElement
       if (!element) return
 
-      // Update content
-      element.innerText = content
+      // Update content and styles in the store
+      updateElement(editingState.id, content, styles)
 
-      // Update styles
-      element.className = element.className
-        .split(' ')
-        .filter(cls => !cls.startsWith('text-'))
-        .concat([styles.color, styles.fontSize].filter(Boolean))
-        .join(' ')
-
+      // Close edit overlay
       setEditingState(null)
     },
-    [editingState]
+    [editingState, updateElement]
   )
 
   return (
@@ -252,29 +142,9 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
           </div>
         ) : (
           <iframe
-            srcDoc={`
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <style>${css}</style>
-                  <style>
-                    [data-editable-id] {
-                      cursor: pointer;
-                      outline: 1px dashed transparent;
-                      transition: outline-color 0.2s;
-                    }
-                    [data-editable-id]:hover {
-                      outline-color: rgba(244, 114, 182, 0.5);
-                    }
-                  </style>
-                </head>
-                <body>${html}</body>
-              </html>
-            `}
             ref={iframeRef}
             className="w-full h-full"
             sandbox="allow-scripts allow-same-origin"
-            onLoad={handleIframeLoad}
           />
         )}
       </div>

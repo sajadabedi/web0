@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils/tailwind-utils'
 import { useKeyboardShortcut } from '@/lib/hooks/use-keyboard-shortcut'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
@@ -103,10 +103,16 @@ export function EditOverlay({
     }
   }
 
-  const handleSave = () => {
-    const currentContent = editRef.current?.innerText || content
-    onSave(currentContent, styles)
-  }
+  const handleSave = useCallback(
+    () => {
+      const currentContent = editRef.current?.innerText || content
+      onSave(currentContent, {
+        color: styles.color || '',
+        fontSize: styles.fontSize || 'text-base'
+      })
+    },
+    [content, styles, onSave]
+  )
 
   return (
     <div
