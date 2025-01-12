@@ -285,7 +285,7 @@ export function SitePreview({ sidebarExpanded = true }: SitePreviewProps) {
             <div className="-mt-2">
               Press{' '}
               <code className="px-1 rounded font-sans bg-neutral-200 dark:bg-neutral-800">
-                Ctrl + K
+                ⌘ + k
               </code>{' '}
               to start.
             </div>
