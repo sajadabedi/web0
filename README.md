@@ -35,7 +35,3 @@ A 5min video demonstrating how it works: https://cln.sh/gGq5XBLy
    pnpm install && pnpm run dev
    ```
 3. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## Design
-
-Check out our design prototype on [Figma](https://www.figma.com/design/ruGrgn03eZp7Fq5qIanJ5d/G0-Builder?node-id=9-18&t=9kE73l3vnOA1jme0-1)
