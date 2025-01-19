@@ -15,9 +15,6 @@ Build your website layout through natural conversations with AI! G0 Builder comb
 - **Hybrid Editing** - Seamlessly switch between AI assistance and manual editing
 - **Context-Aware AI** - AI understands and builds upon your manual changes
 
-## Demo
-A 5min video demonstrating how it works: https://cln.sh/gGq5XBLy
-
 ## Tech Stack
 
 - Next.js (App Router)
