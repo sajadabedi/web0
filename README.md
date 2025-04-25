@@ -10,10 +10,3 @@ This isn’t some polished product, more like a playground where I explore what 
 - What’s the smoothest way to collaborate with an AI?
 
 So yeah, this project is me following that curiosity. A bunch of little experiments wrapped in a visual website builder.
-
-## What i used to build this
-- ReactJS
-- Tailwind CSS
-- Radix UI
-- OpenAI API
-- PostgreSQL
