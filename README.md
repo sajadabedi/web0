@@ -1,34 +1,18 @@
-# G0 Builder - AI-Powered Website Builder
+# Visual website builder
 
-Build your website layout through natural conversations with AI! G0 Builder combines the power of AI with an intuitive visual editor to make website creation easy.
+Okay so… I grew up playing with Visual Basic Classic (shoutout if you remember that 👴), and it honestly got me into design in the first place. Lately, I’ve been wondering — what would a futuristic version of that look like today, especially with AI in the mix? So I started messing around… and this project kinda just happened.
 
-## Key Features
+This isn’t some polished product, more like a playground where I explore what the interface of AI could feel like. Like:
+– Do people actually enjoy chatting with AI to build stuff?
+– Would they rather click and drag?
+– What if it’s a mix of both?
+– What’s the smoothest way to collaborate with an AI?
 
-- **AI Chat Interface** - Have natural conversations with AI to build and modify your website
-- **Visual Editor** - Make direct changes to your website in the preview canvas
-- **Quick Commands** - Use CMD+K to quickly generate or modify website elements
-- **Version History** - Easily revert changes by hovering over chat history
-- **Section Navigation** - Jump between sections of your website
-- **Inline Editing** - Click on any text to edit content, colors, and styling directly
-- **Dark Mode** - Toggle between light and dark themes for both the builder and your website
-- **Instant Publishing** - Get a shareable URL for your website with one click
-- **Hybrid Editing** - Seamlessly switch between AI assistance and manual editing
-- **Context-Aware AI** - AI understands and builds upon your manual changes
+So yeah, this project is me following that curiosity. A bunch of little experiments wrapped in a visual website builder.
 
-## Tech Stack
-
-- Next.js (App Router)
-- TypeScript
+## What i used to build this
+- ReactJS
 - Tailwind CSS
 - Radix UI
 - OpenAI API
 - PostgreSQL
-
-## Getting Started
-
-1. Clone the repository
-2. Start the development:
-   ```bash
-   pnpm install && pnpm run dev
-   ```
-3. Open [http://localhost:3000](http://localhost:3000) in your browser
